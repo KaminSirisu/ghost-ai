@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Implement `context/feature_specs/02-editor.md`.
+- Implement `context/feature_specs/03-auth.md`.
 
 ## Completed
 
@@ -20,17 +20,21 @@ Update this file whenever the current phase, active feature, or implementation s
 - Installed `lucide-react` and shadcn support dependencies.
 - Added `libs/utils.ts` with a reusable `cn()` helper, with `lib/utils.ts` re-exporting it for generated shadcn imports.
 - Mapped shadcn CSS variables to the existing Ghost AI dark theme tokens so primitives do not fall back to light defaults.
+- Added the base editor chrome components from `context/feature_specs/02-editor.md`.
+- Installed `@clerk/ui` and wired Clerk authentication into the app shell.
+- Added Clerk sign-in and sign-up pages with minimal dark, token-driven layouts.
+- Added `proxy.ts` route protection with auth routes public and all other app/API routes protected.
+- Updated `/` to redirect authenticated users to `/editor` and unauthenticated users to the configured sign-in path.
+- Added Clerk `UserButton` to the editor navbar and a minimal protected `/editor` shell.
+- Refined the auth entry screen to a 50/50 desktop split with a token-colored left panel, feature list icons, and Geist font alignment for Clerk UI.
 
 ## In Progress
 
-- Implementing the editor chrome components for the next feature unit.
-  - `components/editor/editor-navbar.tsx`
-  - `components/editor/project-siderbar.tsx`
-  - Validating dialog pattern support via `components/ui/dialog.tsx`
+- None.
 
 ## Next Up
 
-- Review the editor shell components and integrate them in the next editor chapter.
+- Continue with the next editor/project feature unit.
 
 ## Open Questions
 
@@ -47,3 +51,6 @@ Update this file whenever the current phase, active feature, or implementation s
 - 2026-06-08: Read populated design-system feature spec and marked shadcn/ui primitive setup as in progress.
 - 2026-06-08: Completed design-system primitive setup and verified with lint and production build.
 - 2026-06-08: Started editor chrome component work by adding the top navbar and project sidebar shell.
+- 2026-06-08: Started auth implementation from `03-auth.md`; installed `@clerk/ui`, added protected editor shell route, root redirects, Clerk auth pages, `proxy.ts`, and `UserButton` integration.
+- 2026-06-08: Completed auth implementation and verified with `npm run lint` and `npm run build`.
+- 2026-06-08: Updated auth UI to match the screenshot direction with a strict 50/50 desktop layout, differentiated left panel, and Clerk font/theme alignment using existing design tokens.
