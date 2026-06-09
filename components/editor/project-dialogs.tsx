@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { FormEvent, useState } from "react"
+import { FormEvent } from "react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -11,43 +11,56 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-
-export interface EditorProject {
-  id: string
-  name: string
-  slug: string
-  ownership: "owned" | "collaborator"
-}
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { EditorProject } from "@/lib/project-types";
 
 interface ProjectDialogsProps {
-  createOpen: boolean
-  renameProject: EditorProject | null
-  deleteProject: EditorProject | null
-  onCreateOpenChange: (open: boolean) => void
-  onRenameOpenChange: (open: boolean) => void
-  onDeleteOpenChange: (open: boolean) => void
-  onCreateProject: (name: string, slug: string) => void
-  onRenameProject: (projectId: string, name: string, slug: string) => void
-  onDeleteProject: (projectId: string) => void
+  createName: string;
+  createOpen: boolean;
+  createRoomId: string;
+  deleteProject: EditorProject | null;
+  isMutating: boolean;
+  mutationError: string | null;
+  renameName: string;
+  renameProject: EditorProject | null;
+  onCreateNameChange: (name: string) => void;
+  onCreateOpenChange: (open: boolean) => void;
+  onCreateProject: () => void;
+  onDeleteOpenChange: (open: boolean) => void;
+  onDeleteProject: () => void;
+  onRenameNameChange: (name: string) => void;
+  onRenameOpenChange: (open: boolean) => void;
+  onRenameProject: () => void;
 }
 
 export function ProjectDialogs({
+  createName,
   createOpen,
-  renameProject,
+  createRoomId,
   deleteProject,
+  isMutating,
+  mutationError,
+  renameName,
+  renameProject,
+  onCreateNameChange,
   onCreateOpenChange,
-  onRenameOpenChange,
-  onDeleteOpenChange,
   onCreateProject,
-  onRenameProject,
+  onDeleteOpenChange,
   onDeleteProject,
+  onRenameNameChange,
+  onRenameOpenChange,
+  onRenameProject,
 }: ProjectDialogsProps) {
   return (
     <>
       {createOpen && (
         <CreateProjectDialog
+          createName={createName}
+          roomId={createRoomId}
+          isMutating={isMutating}
+          mutationError={mutationError}
+          onNameChange={onCreateNameChange}
           onOpenChange={onCreateOpenChange}
           onCreateProject={onCreateProject}
         />
@@ -56,6 +69,10 @@ export function ProjectDialogs({
         <RenameProjectDialog
           key={renameProject.id}
           project={renameProject}
+          renameName={renameName}
+          isMutating={isMutating}
+          mutationError={mutationError}
+          onNameChange={onRenameNameChange}
           onOpenChange={onRenameOpenChange}
           onRenameProject={onRenameProject}
         />
@@ -63,36 +80,38 @@ export function ProjectDialogs({
       {deleteProject && (
         <DeleteProjectDialog
           project={deleteProject}
+          isMutating={isMutating}
+          mutationError={mutationError}
           onOpenChange={onDeleteOpenChange}
           onDeleteProject={onDeleteProject}
         />
       )}
     </>
-  )
+  );
 }
 
 interface CreateProjectDialogProps {
-  onOpenChange: (open: boolean) => void
-  onCreateProject: (name: string, slug: string) => void
+  createName: string;
+  roomId: string;
+  isMutating: boolean;
+  mutationError: string | null;
+  onNameChange: (name: string) => void;
+  onOpenChange: (open: boolean) => void;
+  onCreateProject: () => void;
 }
 
 function CreateProjectDialog({
+  createName,
+  roomId,
+  isMutating,
+  mutationError,
+  onNameChange,
   onOpenChange,
   onCreateProject,
 }: CreateProjectDialogProps) {
-  const [createName, setCreateName] = useState("")
-  const createSlug = createSlugFromName(createName)
-
   function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    const name = createName.trim()
-    if (!name) {
-      return
-    }
-
-    onCreateProject(name, createSlug)
-    onOpenChange(false)
+    event.preventDefault();
+    onCreateProject();
   }
 
   return (
@@ -117,57 +136,59 @@ function CreateProjectDialog({
               id="create-project-name"
               className="text-copy-primary"
               value={createName}
-              onChange={(event) => setCreateName(event.target.value)}
+              onChange={(event) => onNameChange(event.target.value)}
               placeholder="Realtime checkout system"
               autoFocus
             />
           </div>
 
           <div className="bg-subtle px-3 py-2 border border-surface-border rounded-xl">
-            <p className="text-copy-muted text-xs">Slug preview</p>
+            <p className="text-copy-muted text-xs">Room ID preview</p>
             <p className="mt-1 font-mono text-copy-primary text-sm">
-              {createSlug || "project-slug"}
+              {roomId}
             </p>
           </div>
+
+          {mutationError && (
+            <p className="text-destructive text-sm">{mutationError}</p>
+          )}
 
           <DialogFooter className="bg-subtle/70 -mx-6 -mb-6 border-surface-border rounded-b-3xl">
             <DialogClose render={<Button variant="outline" type="button" />}>
               Cancel
             </DialogClose>
-            <Button type="submit" disabled={!createName.trim()}>
-              Create Project
+            <Button type="submit" disabled={isMutating}>
+              {isMutating ? "Creating..." : "Create Project"}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 interface RenameProjectDialogProps {
-  project: EditorProject
-  onOpenChange: (open: boolean) => void
-  onRenameProject: (projectId: string, name: string, slug: string) => void
+  project: EditorProject;
+  renameName: string;
+  isMutating: boolean;
+  mutationError: string | null;
+  onNameChange: (name: string) => void;
+  onOpenChange: (open: boolean) => void;
+  onRenameProject: () => void;
 }
 
 function RenameProjectDialog({
   project,
+  renameName,
+  isMutating,
+  mutationError,
+  onNameChange,
   onOpenChange,
   onRenameProject,
 }: RenameProjectDialogProps) {
-  const [renameName, setRenameName] = useState(project.name)
-  const renameSlug = createSlugFromName(renameName)
-
   function handleRenameSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    const name = renameName.trim()
-    if (!name) {
-      return
-    }
-
-    onRenameProject(project.id, name, renameSlug)
-    onOpenChange(false)
+    event.preventDefault();
+    onRenameProject();
   }
 
   return (
@@ -192,48 +213,44 @@ function RenameProjectDialog({
               id="rename-project-name"
               className="text-copy-primary"
               value={renameName}
-              onChange={(event) => setRenameName(event.target.value)}
+              onChange={(event) => onNameChange(event.target.value)}
               autoFocus
             />
           </div>
 
-          <div className="bg-subtle px-3 py-2 border border-surface-border rounded-xl">
-            <p className="text-copy-muted text-xs">Slug preview</p>
-            <p className="mt-1 font-mono text-copy-primary text-sm">
-              {renameSlug || "project-slug"}
-            </p>
-          </div>
+          {mutationError && (
+            <p className="text-destructive text-sm">{mutationError}</p>
+          )}
 
           <DialogFooter className="bg-subtle/70 -mx-6 -mb-6 border-surface-border rounded-b-3xl">
             <DialogClose render={<Button variant="outline" type="button" />}>
               Cancel
             </DialogClose>
-            <Button type="submit" disabled={!renameName.trim()}>
-              Rename Project
+            <Button type="submit" disabled={isMutating || !renameName.trim()}>
+              {isMutating ? "Renaming..." : "Rename Project"}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 interface DeleteProjectDialogProps {
-  project: EditorProject
-  onOpenChange: (open: boolean) => void
-  onDeleteProject: (projectId: string) => void
+  project: EditorProject;
+  isMutating: boolean;
+  mutationError: string | null;
+  onOpenChange: (open: boolean) => void;
+  onDeleteProject: () => void;
 }
 
 function DeleteProjectDialog({
   project,
+  isMutating,
+  mutationError,
   onOpenChange,
   onDeleteProject,
 }: DeleteProjectDialogProps) {
-  function handleDeleteConfirm() {
-    onDeleteProject(project.id)
-    onOpenChange(false)
-  }
-
   return (
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="gap-5 bg-elevated p-6 border border-surface-border rounded-3xl sm:max-w-md text-copy-primary">
@@ -244,6 +261,10 @@ function DeleteProjectDialog({
           </DialogDescription>
         </DialogHeader>
 
+        {mutationError && (
+          <p className="text-destructive text-sm">{mutationError}</p>
+        )}
+
         <DialogFooter className="bg-subtle/70 -mx-6 -mb-6 border-surface-border rounded-b-3xl">
           <DialogClose render={<Button variant="outline" type="button" />}>
             Cancel
@@ -251,20 +272,13 @@ function DeleteProjectDialog({
           <Button
             variant="destructive"
             type="button"
-            onClick={handleDeleteConfirm}
+            onClick={onDeleteProject}
+            disabled={isMutating}
           >
-            Delete Project
+            {isMutating ? "Deleting..." : "Delete Project"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
-
-export function createSlugFromName(name: string) {
-  return name
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
+  );
 }

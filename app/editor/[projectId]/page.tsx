@@ -3,7 +3,16 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { EditorShell } from "@/components/editor/editor-shell";
 import { getEditorProjects } from "@/lib/projects";
 
-export default async function EditorPage() {
+interface EditorWorkspacePageProps {
+  params: Promise<{
+    projectId: string;
+  }>;
+}
+
+export default async function EditorWorkspacePage({
+  params,
+}: EditorWorkspacePageProps) {
+  const { projectId } = await params;
   const { userId } = await auth();
 
   if (!userId) {
@@ -20,7 +29,7 @@ export default async function EditorPage() {
 
   return (
     <EditorShell
-      activeProjectId={null}
+      activeProjectId={projectId}
       ownedProjects={ownedProjects}
       sharedProjects={sharedProjects}
     />

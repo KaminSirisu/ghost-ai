@@ -1,64 +1,32 @@
 "use client";
 
 import { useState } from "react";
-
-import { EditorNavbar } from "@/components/editor/editor-navbar";
-import { ProjectSiderbar } from "@/components/editor/project-siderbar";
-import {
-  EditorProject,
-  ProjectDialogs,
-  createSlugFromName,
-} from "@/components/editor/project-dialogs";
-import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
-export function EditorShell() {
+import { EditorNavbar } from "@/components/editor/editor-navbar";
+import { ProjectDialogs } from "@/components/editor/project-dialogs";
+import { ProjectSiderbar } from "@/components/editor/project-siderbar";
+import { Button } from "@/components/ui/button";
+import { useProjectActions } from "@/hooks/use-project-actions";
+import { EditorProject } from "@/lib/project-types";
+
+interface EditorShellProps {
+  activeProjectId: string | null;
+  ownedProjects: EditorProject[];
+  sharedProjects: EditorProject[];
+}
+
+export function EditorShell({
+  activeProjectId,
+  ownedProjects,
+  sharedProjects,
+}: EditorShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [projects, setProjects] = useState<EditorProject[]>([]);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [renameProject, setRenameProject] = useState<EditorProject | null>(
-    null
-  );
-  const [deleteProject, setDeleteProject] = useState<EditorProject | null>(
-    null
-  );
+  const projectActions = useProjectActions(activeProjectId);
 
-  const ownedProjects = projects.filter(
-    (project) => project.ownership === "owned"
-  );
-  const sharedProjects = projects.filter(
-    (project) => project.ownership === "collaborator"
-  );
-
-  function handleCreateProject(name: string, slug: string) {
-    const project: EditorProject = {
-      id: crypto.randomUUID(),
-      name,
-      slug,
-      ownership: "owned",
-    };
-
-    setProjects((currentProjects) => [project, ...currentProjects]);
-    setActiveProjectId(project.id);
-  }
-
-  function handleRenameProject(projectId: string, name: string, slug: string) {
-    setProjects((currentProjects) =>
-      currentProjects.map((project) =>
-        project.id === projectId ? { ...project, name, slug } : project
-      )
-    );
-  }
-
-  function handleDeleteProject(projectId: string) {
-    setProjects((currentProjects) =>
-      currentProjects.filter((project) => project.id !== projectId)
-    );
-
-    if (activeProjectId === projectId) {
-      setActiveProjectId(null);
-    }
+  function selectProject(projectId: string) {
+    projectActions.selectProject(projectId);
+    setIsSidebarOpen(false);
   }
 
   return (
@@ -73,13 +41,10 @@ export function EditorShell() {
         ownedProjects={ownedProjects}
         sharedProjects={sharedProjects}
         activeProjectId={activeProjectId}
-        onNewProject={() => setIsCreateOpen(true)}
-        onSelectProject={(projectId) => {
-          setActiveProjectId(projectId);
-          setIsSidebarOpen(false);
-        }}
-        onRenameProject={setRenameProject}
-        onDeleteProject={setDeleteProject}
+        onNewProject={projectActions.openCreateDialog}
+        onSelectProject={selectProject}
+        onRenameProject={projectActions.openRenameDialog}
+        onDeleteProject={projectActions.openDeleteDialog}
       />
       <section className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center px-6 text-center">
         <div className="max-w-xl">
@@ -94,7 +59,7 @@ export function EditorShell() {
             className="mt-7"
             size="lg"
             type="button"
-            onClick={() => setIsCreateOpen(true)}
+            onClick={projectActions.openCreateDialog}
           >
             <Plus />
             New Project
@@ -102,27 +67,22 @@ export function EditorShell() {
         </div>
       </section>
       <ProjectDialogs
-        createOpen={isCreateOpen}
-        renameProject={renameProject}
-        deleteProject={deleteProject}
-        onCreateOpenChange={setIsCreateOpen}
-        onRenameOpenChange={(open) => {
-          if (!open) {
-            setRenameProject(null);
-          }
-        }}
-        onDeleteOpenChange={(open) => {
-          if (!open) {
-            setDeleteProject(null);
-          }
-        }}
-        onCreateProject={(name, slug) =>
-          handleCreateProject(name, slug || createSlugFromName(name))
-        }
-        onRenameProject={(projectId, name, slug) =>
-          handleRenameProject(projectId, name, slug || createSlugFromName(name))
-        }
-        onDeleteProject={handleDeleteProject}
+        createName={projectActions.createName}
+        createOpen={projectActions.createOpen}
+        createRoomId={projectActions.createRoomId}
+        deleteProject={projectActions.deleteProject}
+        isMutating={projectActions.isMutating}
+        mutationError={projectActions.mutationError}
+        renameName={projectActions.renameName}
+        renameProject={projectActions.renameProject}
+        onCreateNameChange={projectActions.setCreateName}
+        onCreateOpenChange={projectActions.setCreateOpen}
+        onCreateProject={projectActions.createProject}
+        onDeleteOpenChange={projectActions.setDeleteOpen}
+        onDeleteProject={projectActions.deleteSelectedProject}
+        onRenameNameChange={projectActions.setRenameName}
+        onRenameOpenChange={projectActions.setRenameOpen}
+        onRenameProject={projectActions.renameSelectedProject}
       />
     </main>
   );

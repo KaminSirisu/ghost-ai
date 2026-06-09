@@ -12,7 +12,7 @@ function createPrismaClient() {
   if (databaseUrl.startsWith("prisma+postgres://")) {
     return new PrismaClient({ accelerateUrl: databaseUrl }).$extends(
       withAccelerate(),
-    );
+    ) as unknown as PrismaClient;
   }
 
   const adapter = new PrismaPg({ connectionString: databaseUrl });
@@ -20,15 +20,14 @@ function createPrismaClient() {
   return new PrismaClient({ adapter });
 }
 
-type PrismaClientSingleton = ReturnType<typeof createPrismaClient>;
-
 interface PrismaGlobal {
-  prisma?: PrismaClientSingleton;
+  prisma?: PrismaClient;
 }
 
 const globalForPrisma = globalThis as typeof globalThis & PrismaGlobal;
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+export const prisma: PrismaClient =
+  globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
