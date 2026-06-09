@@ -8,10 +8,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Implement `context/feature_specs/05-prisma.md`.
+- Implement `context/feature_specs/06-project-apis.md`.
 
 ## Completed
 
+- Implemented `06-project-apis.md` with backend-only REST handlers for listing, creating, renaming, and deleting owner-scoped projects.
 - Implemented `05-prisma.md` with Prisma project metadata models, collaborator membership relation, cached Prisma client singleton, first migration, generated client, and Accelerate/direct Postgres branching.
 - Implemented `/editor` home screen project entry, local create/rename/delete project dialogs, owned-project sidebar actions, and mobile sidebar scrim behavior from `04-project-dialogs.md`.
 - Established the dark design token foundation in `app/globals.css` using the documented CSS custom properties and Tailwind token aliases.
@@ -36,11 +37,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Continue with the next persistence or project integration feature unit.
+- Feature 07 (TBD)
 
 ## Open Questions
 
-- None for the Prisma foundation unit.
+- None for the project API unit.
 
 ## Architecture Decisions
 
@@ -48,6 +49,8 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Session Notes
 
+- 2026-06-09: Completed `06-project-apis.md`; added `GET`/`POST /api/projects` and `PATCH`/`DELETE /api/projects/[projectId]` with Clerk `401` handling, owner-only `403` mutations, Prisma persistence, and verified with `npm run lint` and `npm run build`.
+- 2026-06-09: Read required project, architecture, UI, code standards, workflow, progress context, Next.js route handler docs, Clerk API route guidance, Prisma client guidance, and `06-project-apis.md`; marked backend project API work as in progress.
 - 2026-06-09: Completed `05-prisma.md`; added `prisma/models/project.prisma`, `lib/prisma.ts`, migration `20260609083811_add_project_models`, generated Prisma Client, and verified with `npx prisma validate`, `npx prisma migrate dev --name add_project_models`, `npx prisma generate`, `npm run lint`, and `npm run build`.
 - 2026-06-09: Read populated `05-prisma.md` and marked the Prisma foundation unit as in progress.
 - 2026-06-09: Read required project, architecture, UI, code standards, workflow, progress context, and `05-prisma.md`; found `05-prisma.md` is empty, so no exact Prisma implementation can be safely performed yet.

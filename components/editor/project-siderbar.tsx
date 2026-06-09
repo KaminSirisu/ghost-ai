@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { EditorProject } from "@/components/editor/project-dialogs"
+import { EditorProject } from "@/lib/project-types"
 import { Pencil, Plus, Trash2, XIcon } from "lucide-react"
 
 interface ProjectSiderbarProps {
@@ -162,7 +162,7 @@ function ProjectList({
               {project.name}
             </span>
             <span className="mt-1 block truncate font-mono text-muted-foreground text-xs">
-              {project.slug}
+              {project.roomId}
             </span>
           </button>
 
