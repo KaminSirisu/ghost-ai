@@ -8,10 +8,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Implement `context/feature_specs/03-auth.md`.
+- Implement `context/feature_specs/04-project-dialogs.md`.
 
 ## Completed
 
+- Implemented `/editor` home screen project entry, local create/rename/delete project dialogs, owned-project sidebar actions, and mobile sidebar scrim behavior from `04-project-dialogs.md`.
 - Established the dark design token foundation in `app/globals.css` using the documented CSS custom properties and Tailwind token aliases.
 - Updated the root layout metadata and global body styling to use Ghost AI branding and design tokens.
 - Replaced the starter homepage with a token-based dark workspace preview.
@@ -38,7 +39,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Open Questions
 
-- None for the current design-system primitive setup.
+- None for the current project dialogs/editor home unit.
 
 ## Architecture Decisions
 
@@ -46,6 +47,9 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Session Notes
 
+- 2026-06-09: Updated the Create Project dialog project-name input to use the dark-theme primary text token.
+- 2026-06-09: Completed `04-project-dialogs.md` implementation with in-memory project state only; verified with `npm run lint` and `npm run build`. Browser plugin verification was blocked because no in-app browser backend was available.
+- 2026-06-09: Read required project, architecture, UI, code standards, workflow, progress context, and `04-project-dialogs.md`; marked project dialogs/editor home work as in progress.
 - 2026-06-08: Read required project, architecture, UI, code standards, workflow, and progress context. Requested design-system spec exists but is empty.
 - 2026-06-08: Implemented dark-only CSS variables, Tailwind token mappings, base document styling, Ghost AI metadata, and an initial token-based homepage.
 - 2026-06-08: Read populated design-system feature spec and marked shadcn/ui primitive setup as in progress.

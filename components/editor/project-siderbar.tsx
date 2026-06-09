@@ -3,19 +3,37 @@
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, XIcon } from "lucide-react"
+import { EditorProject } from "@/components/editor/project-dialogs"
+import { Pencil, Plus, Trash2, XIcon } from "lucide-react"
 
 interface ProjectSiderbarProps {
   isOpen: boolean
   onClose: () => void
+  ownedProjects: EditorProject[]
+  sharedProjects: EditorProject[]
+  activeProjectId: string | null
+  onNewProject: () => void
+  onSelectProject: (projectId: string) => void
+  onRenameProject: (project: EditorProject) => void
+  onDeleteProject: (project: EditorProject) => void
 }
 
-export function ProjectSiderbar({ isOpen, onClose }: ProjectSiderbarProps) {
+export function ProjectSiderbar({
+  isOpen,
+  onClose,
+  ownedProjects,
+  sharedProjects,
+  activeProjectId,
+  onNewProject,
+  onSelectProject,
+  onRenameProject,
+  onDeleteProject,
+}: ProjectSiderbarProps) {
   return (
     <>
       <div
         className={cn(
-          "z-40 fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300",
+          "z-40 fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 md:bg-black/20",
           isOpen ? "opacity-100" : "pointer-events-none opacity-0"
         )}
         aria-hidden={!isOpen}
@@ -51,28 +69,127 @@ export function ProjectSiderbar({ isOpen, onClose }: ProjectSiderbarProps) {
             </TabsList>
 
             <TabsContent value="my-projects" className="space-y-4 pt-4">
-              <div className="bg-background/80 p-6 border border-border rounded-2xl text-muted-foreground text-sm">
-                <p className="font-medium text-foreground">No projects yet</p>
-                <p className="mt-2">Create a new project to start organizing your work.</p>
-              </div>
+              <ProjectList
+                projects={ownedProjects}
+                activeProjectId={activeProjectId}
+                emptyTitle="No projects yet"
+                emptyDescription="Create a new project to start organizing your work."
+                showActions
+                onSelectProject={onSelectProject}
+                onRenameProject={onRenameProject}
+                onDeleteProject={onDeleteProject}
+              />
             </TabsContent>
 
             <TabsContent value="shared" className="space-y-4 pt-4">
-              <div className="bg-background/80 p-6 border border-border rounded-2xl text-muted-foreground text-sm">
-                <p className="font-medium text-foreground">No shared projects</p>
-                <p className="mt-2">Shared projects will appear here once they are available.</p>
-              </div>
+              <ProjectList
+                projects={sharedProjects}
+                activeProjectId={activeProjectId}
+                emptyTitle="No shared projects"
+                emptyDescription="Shared projects will appear here once they are available."
+                showActions={false}
+                onSelectProject={onSelectProject}
+                onRenameProject={onRenameProject}
+                onDeleteProject={onDeleteProject}
+              />
             </TabsContent>
           </Tabs>
         </div>
 
         <div className="mt-auto pt-4">
-          <Button className="justify-center w-full" size="lg" type="button">
+          <Button
+            className="justify-center w-full"
+            size="lg"
+            type="button"
+            onClick={onNewProject}
+          >
             <Plus className="mr-2" />
             New Project
           </Button>
         </div>
       </aside>
     </>
+  )
+}
+
+interface ProjectListProps {
+  projects: EditorProject[]
+  activeProjectId: string | null
+  emptyTitle: string
+  emptyDescription: string
+  showActions: boolean
+  onSelectProject: (projectId: string) => void
+  onRenameProject: (project: EditorProject) => void
+  onDeleteProject: (project: EditorProject) => void
+}
+
+function ProjectList({
+  projects,
+  activeProjectId,
+  emptyTitle,
+  emptyDescription,
+  showActions,
+  onSelectProject,
+  onRenameProject,
+  onDeleteProject,
+}: ProjectListProps) {
+  if (projects.length === 0) {
+    return (
+      <div className="bg-background/80 p-6 border border-border rounded-2xl text-muted-foreground text-sm">
+        <p className="font-medium text-foreground">{emptyTitle}</p>
+        <p className="mt-2">{emptyDescription}</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      {projects.map((project) => (
+        <div
+          key={project.id}
+          className={cn(
+            "group flex items-center gap-2 rounded-2xl border border-border bg-background/80 p-2 transition-colors hover:bg-muted/60",
+            activeProjectId === project.id &&
+              "border-primary/70 bg-accent text-accent-foreground"
+          )}
+        >
+          <button
+            type="button"
+            className="min-w-0 flex-1 rounded-xl px-2 py-1.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            onClick={() => onSelectProject(project.id)}
+          >
+            <span className="block truncate font-medium text-foreground text-sm">
+              {project.name}
+            </span>
+            <span className="mt-1 block truncate font-mono text-muted-foreground text-xs">
+              {project.slug}
+            </span>
+          </button>
+
+          {showActions && (
+            <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                type="button"
+                aria-label={`Rename ${project.name}`}
+                onClick={() => onRenameProject(project)}
+              >
+                <Pencil />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                type="button"
+                aria-label={`Delete ${project.name}`}
+                onClick={() => onDeleteProject(project)}
+              >
+                <Trash2 />
+              </Button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
   )
 }
