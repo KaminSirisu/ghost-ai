@@ -8,10 +8,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Implement `context/feature_specs/04-project-dialogs.md`.
+- Implement `context/feature_specs/05-prisma.md`.
 
 ## Completed
 
+- Implemented `05-prisma.md` with Prisma project metadata models, collaborator membership relation, cached Prisma client singleton, first migration, generated client, and Accelerate/direct Postgres branching.
 - Implemented `/editor` home screen project entry, local create/rename/delete project dialogs, owned-project sidebar actions, and mobile sidebar scrim behavior from `04-project-dialogs.md`.
 - Established the dark design token foundation in `app/globals.css` using the documented CSS custom properties and Tailwind token aliases.
 - Updated the root layout metadata and global body styling to use Ghost AI branding and design tokens.
@@ -35,18 +36,21 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Continue with the next editor/project feature unit.
+- Continue with the next persistence or project integration feature unit.
 
 ## Open Questions
 
-- None for the current project dialogs/editor home unit.
+- None for the Prisma foundation unit.
 
 ## Architecture Decisions
 
-- Add decisions that affect the system design or data model.
+- Prisma client initialization uses Accelerate only for `prisma+postgres://` database URLs and `@prisma/adapter-pg` for direct PostgreSQL URLs.
 
 ## Session Notes
 
+- 2026-06-09: Completed `05-prisma.md`; added `prisma/models/project.prisma`, `lib/prisma.ts`, migration `20260609083811_add_project_models`, generated Prisma Client, and verified with `npx prisma validate`, `npx prisma migrate dev --name add_project_models`, `npx prisma generate`, `npm run lint`, and `npm run build`.
+- 2026-06-09: Read populated `05-prisma.md` and marked the Prisma foundation unit as in progress.
+- 2026-06-09: Read required project, architecture, UI, code standards, workflow, progress context, and `05-prisma.md`; found `05-prisma.md` is empty, so no exact Prisma implementation can be safely performed yet.
 - 2026-06-09: Updated the Create Project dialog project-name input to use the dark-theme primary text token.
 - 2026-06-09: Completed `04-project-dialogs.md` implementation with in-memory project state only; verified with `npm run lint` and `npm run build`. Browser plugin verification was blocked because no in-app browser backend was available.
 - 2026-06-09: Read required project, architecture, UI, code standards, workflow, progress context, and `04-project-dialogs.md`; marked project dialogs/editor home work as in progress.
