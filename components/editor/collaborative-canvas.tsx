@@ -56,9 +56,9 @@ const EDGE_TYPES = {
 } satisfies EdgeTypes;
 const DEFAULT_EDGE_MARKER = {
   type: MarkerType.ArrowClosed,
-  color: "var(--text-primary)",
-  width: 18,
-  height: 18,
+  color: "var(--text-muted)",
+  width: 14,
+  height: 14,
 };
 const EDGE_INTERACTION_WIDTH = 24;
 const VIEWPORT_ANIMATION_DURATION_MS = 180;
@@ -425,7 +425,7 @@ export function CollaborativeCanvas({
           onConnect={handleConnect}
           onDelete={onDelete}
           onInit={setFlowInstance}
-          connectionLineType={ConnectionLineType.Bezier}
+          connectionLineType={ConnectionLineType.SmoothStep}
           connectionMode={ConnectionMode.Loose}
           defaultEdgeOptions={defaultEdgeOptions}
           defaultMarkerColor="var(--text-primary)"
