@@ -12,6 +12,13 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Completed
 
+- Refined starter template modal previews to use a wider import dialog, three roomier horizontal cards, larger full-diagram SVG preview areas, clearer node/edge visibility, and per-card Import buttons.
+- Implemented `18-starter-template.md` with three predefined starter canvas templates, shared canvas typed node/edge data, a starter template import modal with lightweight SVG previews, a workspace navbar entry point, and a Liveblocks React Flow replacement import flow that clears the current canvas before adding template nodes and edges.
+- Implemented `17-canvas-ergonomics.md` with a bottom-left floating zoom/history control bar, animated React Flow zoom out/fit view/zoom in actions, Liveblocks undo/redo hooks with disabled states, `hooks/useKeyboardShortcuts`, editable-field shortcut skipping, and MiniMap removal.
+- Implemented `16-edge-behavior.md` with four-side node handles, custom smooth-step canvas edge rendering, arrowheaded light strokes, wider invisible edge interaction paths, hover/selection brightening, midpoint-positioned inline label badges, edit-on-double-click labels, and Liveblocks-synced edge label updates.
+- Implemented `15-nodes-color-toolbar.md` with predefined background/text color pairs on nodes, selected-node floating color swatches, active swatch state, tight text-color-based hover glow, drag/pan-safe toolbar interactions, and Liveblocks-synced color updates without server calls.
+- Implemented `14-node-editing.md` with selected-node resize handles, minimum resize dimensions, centered inline label editing, empty-label placeholder text, Escape/blur editing close behavior, and label updates synced through the existing Liveblocks React Flow node-change flow.
+- Implemented `13-node-shape.md` with shape-aware node rendering, selected-state border emphasis, SVG scaling for diamond/hexagon/cylinder, CSS rendering for rectangle/pill/circle, and a cursor-following ghost drag preview from the shape panel.
 - Fixed `context/current-issues.md` editor canvas issues by making the canvas a flush full-viewport layer, converting the AI sidebar to an overlay, moving the left sidebar fully off-screen when closed, removing embedded canvas card/grid behavior, and rendering dropped nodes with their actual shape values.
 - Implemented `12-shape-panel.md` with a draggable bottom shape panel, shape drag payloads with default sizes, canvas dragover/drop handling, React Flow coordinate conversion, Liveblocks-synced node creation, generated shape/timestamp/counter node IDs, and a basic custom canvas node renderer.
 - Implemented `11-base-canvas.md` with a Liveblocks-backed React Flow canvas foundation, shared canvas node/edge types, room wrapper, suspense loading state, connection fallback, MiniMap, and dot-pattern background.
@@ -43,11 +50,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- `13-node-shape.md`
+- Feature 19 (TBD)
 
 ## Open Questions
 
-- None for the current canvas issues.
+- None for the starter template unit.
 
 ## Architecture Decisions
 
@@ -55,6 +62,21 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Session Notes
 
+- 2026-06-11: Completed starter template modal visual refinement; widened the dialog beyond the default responsive max width, changed the grid to roomier three-column cards, enlarged previews, removed tiny preview labels so diagram shapes/edges are clearer, and added per-card Import buttons; verified with `npm run lint` and `npm run build`. Browser plugin verification was blocked because the in-app browser backend reported `iab` unavailable.
+- 2026-06-11: Started starter template modal visual refinement from screenshots; target is a wider import dialog with clearer full-template previews and roomier cards, without changing persistence or canvas rendering behavior.
+- 2026-06-11: Completed `18-starter-template.md`; added the starter template library, import modal with SVG previews, workspace navbar Templates button, and collaborative canvas replacement flow that clears current edges/nodes before adding template edges/nodes and fitting the view; verified with `npm run lint` and `npm run build`. Browser plugin verification was blocked because the in-app browser backend reported `iab` unavailable.
+- 2026-06-11: Read required project, architecture, UI, code standards, workflow, progress context, Next.js client component docs, Ghost AI feature workflow memory, and `18-starter-template.md`; marked starter template library/import work as in progress.
+- 2026-06-11: Completed `17-canvas-ergonomics.md`; added the bottom-left control bar above the shape panel, wired zoom controls to the React Flow instance with short animations, wired undo/redo to Liveblocks history hooks with disabled visual states, added `hooks/useKeyboardShortcuts` for zoom and history shortcuts while skipping editable fields, and removed the MiniMap; verified with `npm run lint` and `npm run build`. Browser plugin verification was blocked because the in-app browser backend reported `iab` unavailable.
+- 2026-06-11: Read required project, architecture, UI, code standards, workflow, progress context, Next.js client component docs, current canvas source, Liveblocks hook exports, React Flow instance types, and `17-canvas-ergonomics.md`; marked canvas ergonomics work as in progress.
+- 2026-06-11: Completed `16-edge-behavior.md`; added custom edge rendering with smooth-step routing, arrow markers, widened invisible interaction paths, hover/selected brightening, midpoint-positioned editable label badges, four explicit node handles, and Liveblocks edge label updates; verified with `npm run lint` and `npm run build`. Browser plugin verification was blocked because the in-app browser backend was unavailable.
+- 2026-06-11: Read required project, architecture, UI, code standards, workflow, progress context, Next.js client component docs, Ghost AI feature workflow memory, and `16-edge-behavior.md`; marked edge behavior work as in progress.
+- 2026-06-11: Completed `15-nodes-color-toolbar.md`; added text color to canvas node data, defaulted dropped nodes to the neutral color pair, added selected-node floating swatches with active state and controlled hover glow, and synced color pair changes through Liveblocks React Flow `onNodesChange`; verified with `npm run lint` and `npm run build`.
+- 2026-06-11: Read required project, architecture, UI, code standards, workflow, progress context, Next.js client component docs, Liveblocks React Flow guidance, and `15-nodes-color-toolbar.md`; marked node color toolbar work as in progress.
+- 2026-06-11: Fixed focused node label editing alignment so the active textarea text is vertically centered in the node instead of sitting at the top of the edit box.
+- 2026-06-11: Completed `14-node-editing.md`; added selected-node resize handles with minimum dimensions, overlaid centered textarea editing on node double-click, placeholder text for empty labels, blur/Escape edit closing, and label updates through the existing Liveblocks React Flow `onNodesChange` path; verified with `npm run lint` and `npm run build`.
+- 2026-06-11: Read required project, architecture, UI, code standards, workflow, progress context, Next.js client component docs, Liveblocks React Flow guidance, and `14-node-editing.md`; marked node resizing and inline label editing work as in progress.
+- 2026-06-11: Completed `13-node-shape.md`; exported a reusable node shape primitive, added selected-state border emphasis, kept CSS shapes for rectangle/pill/circle and SVG shapes for diamond/hexagon/cylinder, and added a cursor-following ghost preview for shape drags without changing drop creation; verified with `npm run lint` and `npm run build`. Browser plugin verification was blocked because the in-app browser backend was unavailable.
+- 2026-06-11: Read required project, architecture, UI, code standards, workflow, progress context, Next.js client component docs, Liveblocks React Flow guidance, and `13-node-shape.md`; marked node shape rendering and drag preview work as in progress.
 - 2026-06-11: Completed `context/current-issues.md` fixes; replaced embedded workspace grid/card treatment with a full canvas layer, converted the right AI sidebar to a floating overlay, strengthened closed left-sidebar offset, added shape-aware node rendering for rectangle, diamond, circle, pill, cylinder, and hexagon, and kept shape drops on the Liveblocks React Flow node-change path; verified with `npm run lint` and `npm run build`. Browser plugin verification was blocked because the in-app browser backend was unavailable.
 - 2026-06-11: Read required project, architecture, UI, code standards, workflow, progress context, Next.js CSS docs, Liveblocks React Flow guidance, `context/current-issues.md`, current screenshot, and editor canvas/sidebar source; marked current canvas issue fixes as in progress.
 - 2026-06-11: Completed `12-shape-panel.md`; added the bottom shape panel, drag payload parsing, drop-to-node creation through Liveblocks React Flow node changes, default node size constants, and a basic custom node renderer; verified with `npm run lint` and `npm run build`. Browser plugin verification was blocked because the in-app browser backend was unavailable.

@@ -4,9 +4,16 @@ import { Component, ReactNode } from "react";
 import { ClientSideSuspense, LiveblocksProvider, RoomProvider } from "@liveblocks/react";
 
 import { CollaborativeCanvas } from "@/components/editor/collaborative-canvas";
+import type { CanvasTemplate } from "@/components/editor/start-templates";
+
+export interface CanvasTemplateImportRequest {
+  id: number;
+  template: CanvasTemplate;
+}
 
 interface CanvasRoomProps {
   roomId: string;
+  templateImportRequest: CanvasTemplateImportRequest | null;
 }
 
 interface CanvasErrorBoundaryProps {
@@ -18,7 +25,7 @@ interface CanvasErrorBoundaryState {
   hasError: boolean;
 }
 
-export function CanvasRoom({ roomId }: CanvasRoomProps) {
+export function CanvasRoom({ roomId, templateImportRequest }: CanvasRoomProps) {
   return (
     <CanvasErrorBoundary fallback={<CanvasConnectionError />}>
       <LiveblocksProvider
@@ -45,7 +52,11 @@ export function CanvasRoom({ roomId }: CanvasRoomProps) {
           }}
         >
           <ClientSideSuspense fallback={<CanvasLoading />}>
-            {() => <CollaborativeCanvas />}
+            {() => (
+              <CollaborativeCanvas
+                templateImportRequest={templateImportRequest}
+              />
+            )}
           </ClientSideSuspense>
         </RoomProvider>
       </LiveblocksProvider>
