@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useId,
   useRef,
   useState,
   type ChangeEvent,
@@ -11,7 +12,7 @@ import {
 } from "react";
 import {
   EdgeLabelRenderer,
-  getBezierPath,
+  getSmoothStepPath,
   type EdgeProps,
 } from "@xyflow/react";
 
@@ -21,11 +22,16 @@ import type { CanvasEdge } from "@/types/canvas";
 
 const EMPTY_EDGE_LABEL_HINT = "Add label";
 const EDGE_INTERACTION_WIDTH = 24;
+const EDGE_STROKE_REST = "var(--text-faint)";
+const EDGE_STROKE_ACTIVE = "var(--text-secondary)";
+const EDGE_STROKE_WIDTH_REST = 1.75;
+const EDGE_STROKE_WIDTH_ACTIVE = 2.25;
+const EDGE_PATH_RADIUS = 10;
+const EDGE_PATH_OFFSET = 28;
 
 export function CanvasEdge({
   data,
   id,
-  markerEnd,
   selected,
   sourcePosition,
   sourceX,
@@ -35,11 +41,14 @@ export function CanvasEdge({
   targetY,
 }: EdgeProps<CanvasEdge>) {
   const { updateEdgeLabel } = useCanvasEdgeActions();
+  const markerId = useId().replace(/:/g, "");
   const inputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [draftLabel, setDraftLabel] = useState(data?.label ?? "");
-  const [edgePath, labelX, labelY] = getBezierPath({
+  const [edgePath, labelX, labelY] = getSmoothStepPath({
+    borderRadius: EDGE_PATH_RADIUS,
+    offset: EDGE_PATH_OFFSET,
     sourceX,
     sourceY,
     sourcePosition,
@@ -50,6 +59,10 @@ export function CanvasEdge({
   const label = data?.label ?? "";
   const isActive = selected || isHovered || isEditing;
   const showLabel = isEditing || Boolean(label) || isActive;
+  const edgeStroke = isActive ? EDGE_STROKE_ACTIVE : EDGE_STROKE_REST;
+  const edgeStrokeWidth = isActive
+    ? EDGE_STROKE_WIDTH_ACTIVE
+    : EDGE_STROKE_WIDTH_REST;
 
   useEffect(() => {
     if (isEditing) {
@@ -89,6 +102,19 @@ export function CanvasEdge({
 
   return (
     <>
+      <defs>
+        <marker
+          id={markerId}
+          viewBox="0 0 8 8"
+          refX="7"
+          refY="4"
+          markerWidth="7"
+          markerHeight="7"
+          orient="auto-start-reverse"
+        >
+          <path d="M1 1 L7 4 L1 7 Z" fill={edgeStroke} />
+        </marker>
+      </defs>
       <path
         d={edgePath}
         fill="none"
@@ -103,14 +129,14 @@ export function CanvasEdge({
       <path
         d={edgePath}
         fill="none"
-        markerEnd={markerEnd}
-        stroke="var(--text-primary)"
+        markerEnd={`url(#${markerId})`}
+        stroke={edgeStroke}
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeWidth={2}
+        strokeWidth={edgeStrokeWidth}
         className={cn(
-          "pointer-events-none transition-opacity duration-150",
-          isActive ? "opacity-95" : "opacity-55",
+          "pointer-events-none transition-[opacity,stroke-width] duration-150",
+          isActive ? "opacity-90" : "opacity-65",
         )}
       />
       {showLabel ? (

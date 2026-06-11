@@ -12,6 +12,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Completed
 
+- Refined canvas edge rendering to match the screenshot direction with orthogonal smooth-step paths, muted gray strokes, smaller inline arrowheads, subtle active brightening, and a smooth-step connection preview.
 - Refined starter template modal previews to use a wider import dialog, three roomier horizontal cards, larger full-diagram SVG preview areas, clearer node/edge visibility, and per-card Import buttons.
 - Implemented `18-starter-template.md` with three predefined starter canvas templates, shared canvas typed node/edge data, a starter template import modal with lightweight SVG previews, a workspace navbar entry point, and a Liveblocks React Flow replacement import flow that clears the current canvas before adding template nodes and edges.
 - Implemented `17-canvas-ergonomics.md` with a bottom-left floating zoom/history control bar, animated React Flow zoom out/fit view/zoom in actions, Liveblocks undo/redo hooks with disabled states, `hooks/useKeyboardShortcuts`, editable-field shortcut skipping, and MiniMap removal.
@@ -62,6 +63,8 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Session Notes
 
+- 2026-06-12: Completed canvas edge visual refinement; changed `components/editor/canvas-edge.tsx` from Bezier to `getSmoothStepPath`, added muted gray rest strokes, brighter selected/hover/edit strokes, smaller local SVG arrowheads, retained wide transparent hit paths and label editing, and changed the live connection preview to smooth-step; verified with `npm run lint` and `npm run build`. Browser plugin verification was blocked because the in-app browser backend reported `iab` unavailable.
+- 2026-06-12: Started canvas edge visual refinement from screenshot; found the custom edge renderer was using Bezier paths even though `16-edge-behavior.md` calls for `getSmoothStepPath` right-angle routing.
 - 2026-06-11: Completed starter template modal visual refinement; widened the dialog beyond the default responsive max width, changed the grid to roomier three-column cards, enlarged previews, removed tiny preview labels so diagram shapes/edges are clearer, and added per-card Import buttons; verified with `npm run lint` and `npm run build`. Browser plugin verification was blocked because the in-app browser backend reported `iab` unavailable.
 - 2026-06-11: Started starter template modal visual refinement from screenshots; target is a wider import dialog with clearer full-template previews and roomier cards, without changing persistence or canvas rendering behavior.
 - 2026-06-11: Completed `18-starter-template.md`; added the starter template library, import modal with SVG previews, workspace navbar Templates button, and collaborative canvas replacement flow that clears current edges/nodes before adding template edges/nodes and fitting the view; verified with `npm run lint` and `npm run build`. Browser plugin verification was blocked because the in-app browser backend reported `iab` unavailable.
