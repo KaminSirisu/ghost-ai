@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Bot, PanelLeftClose, PanelLeftOpen, Share2 } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 
+import { CanvasRoom } from "@/components/editor/canvas-room";
 import { ProjectDialogs } from "@/components/editor/project-dialogs";
 import { ProjectSiderbar } from "@/components/editor/project-siderbar";
 import { ShareDialog } from "@/components/editor/share-dialog";
@@ -37,8 +38,8 @@ export function EditorWorkspaceShell({
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-base text-copy-primary">
-      <header className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-surface-border bg-surface px-4 shadow-sm shadow-black/10">
+    <main className="relative h-screen overflow-hidden bg-base text-copy-primary">
+      <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b border-surface-border bg-surface/95 px-4 backdrop-blur">
         <div className="flex min-w-0 items-center gap-3">
           <Button
             variant="ghost"
@@ -95,31 +96,24 @@ export function EditorWorkspaceShell({
         onDeleteProject={projectActions.openDeleteDialog}
       />
 
-      <div className="grid min-h-screen pt-14 md:grid-cols-[1fr_auto]">
-        <section className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center bg-base px-6">
-          <div className="rounded-2xl border border-surface-border bg-surface/70 px-6 py-5 text-center">
-            <p className="text-sm font-medium text-copy-primary">
-              Canvas workspace placeholder
-            </p>
-            <p className="mt-2 max-w-sm text-sm leading-6 text-copy-muted">
-              Real-time canvas editing will be added in a later feature unit.
-            </p>
-          </div>
-        </section>
+      <section className="absolute inset-x-0 bottom-0 top-14 bg-base">
+        <CanvasRoom roomId={activeProjectId} />
+      </section>
 
-        {isAiSidebarOpen && (
-          <aside className="hidden w-80 border-l border-surface-border bg-surface px-4 py-5 md:block">
-            <div className="rounded-2xl border border-surface-border bg-elevated p-4">
-              <p className="text-sm font-semibold text-copy-primary">
-                AI assistant
-              </p>
-              <p className="mt-2 text-sm leading-6 text-copy-muted">
-                Chat controls and generation status will appear here later.
-              </p>
-            </div>
-          </aside>
-        )}
-      </div>
+      <aside
+        className={[
+          "fixed bottom-4 right-4 top-16 z-30 hidden w-80 flex-col rounded-2xl border border-surface-border bg-surface/90 px-4 py-5 shadow-2xl shadow-base/60 backdrop-blur transition-transform duration-300 md:flex",
+          isAiSidebarOpen
+            ? "translate-x-0"
+            : "pointer-events-none translate-x-[calc(100%+1.5rem)]",
+        ].join(" ")}
+        aria-hidden={!isAiSidebarOpen}
+      >
+        <p className="text-sm font-semibold text-copy-primary">AI assistant</p>
+        <p className="mt-2 text-sm leading-6 text-copy-muted">
+          Chat controls and generation status will appear here later.
+        </p>
+      </aside>
 
       <ProjectDialogs
         createName={projectActions.createName}

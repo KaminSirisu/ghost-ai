@@ -12,6 +12,10 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Completed
 
+- Fixed `context/current-issues.md` editor canvas issues by making the canvas a flush full-viewport layer, converting the AI sidebar to an overlay, moving the left sidebar fully off-screen when closed, removing embedded canvas card/grid behavior, and rendering dropped nodes with their actual shape values.
+- Implemented `12-shape-panel.md` with a draggable bottom shape panel, shape drag payloads with default sizes, canvas dragover/drop handling, React Flow coordinate conversion, Liveblocks-synced node creation, generated shape/timestamp/counter node IDs, and a basic custom canvas node renderer.
+- Implemented `11-base-canvas.md` with a Liveblocks-backed React Flow canvas foundation, shared canvas node/edge types, room wrapper, suspense loading state, connection fallback, MiniMap, and dot-pattern background.
+- Implemented `10-liveblocks-setup.md` with Liveblocks Presence/UserMeta typing, cached node client, deterministic cursor colors, room creation, Clerk/project-gated auth token issuance, and `@liveblocks/node`.
 - Implemented `09-share-dialog.md` with collaborator listing, owner-only invite/remove APIs, Clerk profile enrichment, project link copying, and workspace share dialog access modes.
 - Implemented `08-editor-workspace-shell.md` with a server-rendered `/editor/[roomId]` workspace shell, project access checks, access-denied state, highlighted project sidebar, canvas placeholder, and AI sidebar placeholder.
 - Implemented `06-project-apis.md` with backend-only REST handlers for listing, creating, renaming, and deleting owner-scoped projects.
@@ -39,11 +43,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Feature 07/09 (TBD)
+- `13-node-shape.md`
 
 ## Open Questions
 
-- None for the share dialog unit.
+- None for the current canvas issues.
 
 ## Architecture Decisions
 
@@ -51,6 +55,12 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Session Notes
 
+- 2026-06-11: Completed `context/current-issues.md` fixes; replaced embedded workspace grid/card treatment with a full canvas layer, converted the right AI sidebar to a floating overlay, strengthened closed left-sidebar offset, added shape-aware node rendering for rectangle, diamond, circle, pill, cylinder, and hexagon, and kept shape drops on the Liveblocks React Flow node-change path; verified with `npm run lint` and `npm run build`. Browser plugin verification was blocked because the in-app browser backend was unavailable.
+- 2026-06-11: Read required project, architecture, UI, code standards, workflow, progress context, Next.js CSS docs, Liveblocks React Flow guidance, `context/current-issues.md`, current screenshot, and editor canvas/sidebar source; marked current canvas issue fixes as in progress.
+- 2026-06-11: Completed `12-shape-panel.md`; added the bottom shape panel, drag payload parsing, drop-to-node creation through Liveblocks React Flow node changes, default node size constants, and a basic custom node renderer; verified with `npm run lint` and `npm run build`. Browser plugin verification was blocked because the in-app browser backend was unavailable.
+- 2026-06-11: Read required project, architecture, UI, code standards, workflow, progress context, Next.js client/server component docs, Liveblocks React Flow guidance, and `12-shape-panel.md`; marked shape panel work as in progress.
+- 2026-06-10: Completed `11-base-canvas.md`; replaced the workspace placeholder with a Liveblocks `LiveblocksProvider`/`RoomProvider` wrapper and `useLiveblocksFlow` React Flow canvas using empty initial nodes and edges; verified with `npm run lint`, `npx tsc --noEmit`, and `npm run build`.
+- 2026-06-10: Completed `10-liveblocks-setup.md`; configured `liveblocks.config.ts`, added cached Liveblocks node client and deterministic cursor colors, added `POST /api/liveblocks-auth` with Clerk auth, project access checks, room creation, and session metadata; installed `@liveblocks/node`; verified with `npm run lint`, `npx tsc --noEmit`, and `npm run build`.
 - 2026-06-10: Completed `09-share-dialog.md`; added collaborator API handlers, server-only collaborator helpers with Clerk Backend API enrichment, and a workspace share dialog with owner manage mode and collaborator read-only mode; verified with `npm run lint` and `npm run build`.
 - 2026-06-10: Completed `08-editor-workspace-shell.md`; added `lib/project-access.ts`, `components/editor/access-denied.tsx`, `components/editor/editor-workspace-shell.tsx`, and `/editor/[roomId]` with server-side auth/access checks and placeholder workspace layout; verified with `npm run lint` and `npm run build`.
 - 2026-06-09: Completed `06-project-apis.md`; added `GET`/`POST /api/projects` and `PATCH`/`DELETE /api/projects/[projectId]` with Clerk `401` handling, owner-only `403` mutations, Prisma persistence, and verified with `npm run lint` and `npm run build`.

@@ -33,7 +33,7 @@ export function ProjectSiderbar({
     <>
       <div
         className={cn(
-          "z-40 fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 md:bg-black/20",
+          "fixed inset-0 z-40 bg-base/70 backdrop-blur-sm transition-opacity duration-300 md:bg-base/45",
           isOpen ? "opacity-100" : "pointer-events-none opacity-0"
         )}
         aria-hidden={!isOpen}
@@ -42,8 +42,10 @@ export function ProjectSiderbar({
 
       <aside
         className={cn(
-          "left-0 z-50 fixed inset-y-0 flex flex-col bg-sidebar shadow-2xl shadow-black/40 px-4 py-5 border-border border-r w-full max-w-sm transition-transform duration-300",
-          isOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed inset-y-0 left-0 z-50 flex w-full max-w-sm flex-col border-r border-surface-border bg-sidebar/95 px-4 py-5 shadow-2xl shadow-base/60 backdrop-blur transition-transform duration-300",
+          isOpen
+            ? "translate-x-0"
+            : "pointer-events-none -translate-x-[calc(100%+1.5rem)]"
         )}
         aria-hidden={!isOpen}
       >

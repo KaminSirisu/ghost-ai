@@ -1,0 +1,78 @@
+
+> ghost-ai@0.1.0 dev
+> next dev --port 3000
+
+▲ Next.js 16.2.7 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.56.1:3000
+- Environments: .env.local, .env
+✓ Ready in 609ms
+Creating turbopack project { dir: 'C:\\Users\\Kamin\\Desktop\\ghost-ai', testMode: true }
+
+Attention: Clerk collects telemetry data from its SDKs when connected to development instances.
+The data collected is used to inform Clerk's product roadmap.
+To learn more, including how to opt-out from the telemetry program, visit: https://clerk.com/docs/telemetry.
+
+ GET /editor/my-system-design-1ruz2 200 in 5.5s (next.js: 1452ms, proxy.ts: 1054ms, application-code: 3.0s)
+ POST /api/liveblocks-auth 500 in 2.1s (next.js: 782ms, proxy.ts: 14ms, application-code: 1256ms)
+ POST /api/liveblocks-auth 500 in 779ms (next.js: 7ms, proxy.ts: 22ms, application-code: 749ms)
+ POST /api/liveblocks-auth 500 in 800ms (next.js: 7ms, proxy.ts: 32ms, application-code: 762ms)
+ POST /api/liveblocks-auth 500 in 737ms (next.js: 3ms, proxy.ts: 24ms, application-code: 711ms)
+ POST /api/liveblocks-auth 500 in 844ms (next.js: 4ms, proxy.ts: 15ms, application-code: 825ms)
+ POST /api/liveblocks-auth 500 in 1022ms (next.js: 5ms, proxy.ts: 22ms, application-code: 995ms)
+ POST /api/liveblocks-auth 500 in 1029ms (next.js: 5ms, proxy.ts: 19ms, application-code: 1005ms)
+ POST /api/liveblocks-auth 500 in 1410ms (next.js: 6ms, proxy.ts: 19ms, application-code: 1386ms)
+ POST /api/liveblocks-auth 500 in 1105ms (next.js: 10ms, proxy.ts: 18ms, application-code: 1077ms)
+ POST /api/liveblocks-auth 500 in 1151ms (next.js: 7ms, proxy.ts: 28ms, application-code: 1117ms)
+ POST /api/liveblocks-auth 500 in 1120ms (next.js: 3ms, proxy.ts: 11ms, application-code: 1106ms)
+ POST /api/liveblocks-auth 500 in 1581ms (next.js: 3ms, proxy.ts: 14ms, application-code: 1564ms)
+ POST /api/liveblocks-auth 500 in 1109ms (next.js: 2ms, proxy.ts: 12ms, application-code: 1094ms)
+ POST /api/liveblocks-auth 500 in 1235ms (next.js: 3ms, proxy.ts: 14ms, application-code: 1218ms)
+ POST /api/liveblocks-auth 500 in 1143ms (next.js: 5ms, proxy.ts: 28ms, application-code: 1110ms)
+ POST /api/liveblocks-auth 500 in 1352ms (next.js: 5ms, proxy.ts: 30ms, application-code: 1317ms)
+ POST /api/liveblocks-auth 500 in 1490ms (next.js: 6ms, proxy.ts: 15ms, application-code: 1469ms)
+ POST /api/liveblocks-auth 500 in 1481ms (next.js: 5ms, proxy.ts: 14ms, application-code: 1462ms)
+ POST /api/liveblocks-auth 500 in 1254ms (next.js: 6ms, proxy.ts: 31ms, application-code: 1217ms)
+ POST /api/liveblocks-auth 500 in 1600ms (next.js: 5ms, proxy.ts: 15ms, application-code: 1580ms)
+ POST /api/liveblocks-auth 500 in 1770ms (next.js: 6ms, proxy.ts: 12ms, application-code: 1752ms)
+ POST /api/liveblocks-auth 500 in 1652ms (next.js: 9ms, proxy.ts: 16ms, application-code: 1628ms)
+ POST /api/liveblocks-auth 500 in 1496ms (next.js: 16ms, proxy.ts: 27ms, application-code: 1454ms)
+ POST /api/liveblocks-auth 500 in 1182ms (next.js: 5ms, proxy.ts: 14ms, application-code: 1163ms)
+ POST /api/liveblocks-auth 500 in 1139ms (next.js: 8ms, proxy.ts: 17ms, application-code: 1114ms)
+ POST /api/liveblocks-auth 500 in 1101ms (next.js: 5ms, proxy.ts: 12ms, application-code: 1083ms)
+ POST /api/liveblocks-auth 500 in 1192ms (next.js: 5ms, proxy.ts: 14ms, application-code: 1173ms)
+ POST /api/liveblocks-auth 500 in 1184ms (next.js: 7ms, proxy.ts: 30ms, application-code: 1147ms)
+ POST /api/liveblocks-auth 500 in 1719ms (next.js: 5ms, proxy.ts: 313ms, application-code: 1401ms)
+ POST /api/liveblocks-auth 500 in 1117ms (next.js: 7ms, proxy.ts: 18ms, application-code: 1093ms)
+ POST /api/liveblocks-auth 500 in 1139ms (next.js: 6ms, proxy.ts: 12ms, application-code: 1122ms)
+ POST /api/liveblocks-auth 500 in 1355ms (next.js: 6ms, proxy.ts: 12ms, application-code: 1338ms)
+ POST /api/liveblocks-auth 500 in 1294ms (next.js: 6ms, proxy.ts: 14ms, application-code: 1273ms)
+ POST /api/liveblocks-auth 500 in 1196ms (next.js: 5ms, proxy.ts: 14ms, application-code: 1177ms)
+ POST /api/liveblocks-auth 500 in 1328ms (next.js: 6ms, proxy.ts: 17ms, application-code: 1305ms)
+ POST /api/liveblocks-auth 500 in 1173ms (next.js: 6ms, proxy.ts: 14ms, application-code: 1153ms)
+ POST /api/liveblocks-auth 500 in 1159ms (next.js: 5ms, proxy.ts: 14ms, application-code: 1139ms)
+ POST /api/liveblocks-auth 500 in 1144ms (next.js: 7ms, proxy.ts: 15ms, application-code: 1122ms)
+ POST /api/liveblocks-auth 500 in 1234ms (next.js: 5ms, proxy.ts: 12ms, application-code: 1217ms)
+ POST /api/liveblocks-auth 500 in 1413ms (next.js: 6ms, proxy.ts: 14ms, application-code: 1394ms)
+ POST /api/liveblocks-auth 500 in 1516ms (next.js: 6ms, proxy.ts: 16ms, application-code: 1494ms)
+ POST /api/liveblocks-auth 500 in 1176ms (next.js: 5ms, proxy.ts: 13ms, application-code: 1159ms)
+ POST /api/liveblocks-auth 500 in 1186ms (next.js: 5ms, proxy.ts: 15ms, application-code: 1167ms)
+ POST /api/liveblocks-auth 500 in 1178ms (next.js: 5ms, proxy.ts: 15ms, application-code: 1158ms)
+ POST /api/liveblocks-auth 500 in 1440ms (next.js: 5ms, proxy.ts: 12ms, application-code: 1423ms)
+ POST /api/liveblocks-auth 500 in 1415ms (next.js: 6ms, proxy.ts: 15ms, application-code: 1393ms)
+ POST /api/liveblocks-auth 500 in 1594ms (next.js: 6ms, proxy.ts: 13ms, application-code: 1576ms)
+ POST /api/liveblocks-auth 500 in 1399ms (next.js: 3ms, proxy.ts: 14ms, application-code: 1382ms)
+ POST /api/liveblocks-auth 500 in 1638ms (next.js: 11ms, proxy.ts: 6ms, application-code: 1620ms)
+ POST /api/liveblocks-auth 500 in 1364ms (next.js: 3ms, proxy.ts: 14ms, application-code: 1347ms)
+ POST /api/liveblocks-auth 500 in 1471ms (next.js: 9ms, proxy.ts: 14ms, application-code: 1448ms)
+ POST /api/liveblocks-auth 500 in 5.2s (next.js: 4ms, proxy.ts: 15ms, application-code: 5.2s)
+ POST /api/liveblocks-auth 500 in 1165ms (next.js: 3ms, proxy.ts: 14ms, application-code: 1147ms)
+ POST /api/liveblocks-auth 500 in 1217ms (next.js: 5ms, proxy.ts: 162ms, application-code: 1051ms)
+ POST /api/liveblocks-auth 500 in 1219ms (next.js: 4ms, proxy.ts: 12ms, application-code: 1203ms)
+ POST /api/liveblocks-auth 500 in 1222ms (next.js: 3ms, proxy.ts: 12ms, application-code: 1206ms)
+ POST /api/liveblocks-auth 500 in 1286ms (next.js: 3ms, proxy.ts: 13ms, application-code: 1271ms)
+ POST /api/liveblocks-auth 500 in 1445ms (next.js: 6ms, proxy.ts: 15ms, application-code: 1424ms)
+ POST /api/liveblocks-auth 500 in 1250ms (next.js: 3ms, proxy.ts: 14ms, application-code: 1233ms)
+ POST /api/liveblocks-auth 500 in 2.2s (next.js: 6ms, proxy.ts: 12ms, application-code: 2.1s)
+ POST /api/liveblocks-auth 500 in 1617ms (next.js: 4ms, proxy.ts: 12ms, application-code: 1601ms)
+[?25h
