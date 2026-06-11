@@ -14,6 +14,8 @@ export const NODE_COLORS = [
   { fill: "#062822", text: "#0AC7B4" },
 ] as const;
 
+export type NodeColorPair = (typeof NODE_COLORS)[number];
+
 export const NODE_SHAPES = [
   "rectangle",
   "diamond",
@@ -51,8 +53,13 @@ export interface CanvasShapeDragPayload {
 export interface CanvasNodeData extends Record<string, unknown> {
   label: string;
   color: string;
+  textColor: string;
   shape: NodeShape;
 }
 
+export interface CanvasEdgeData extends Record<string, unknown> {
+  label: string;
+}
+
 export type CanvasNode = Node<CanvasNodeData, typeof CANVAS_NODE_TYPE>;
-export type CanvasEdge = Edge<Record<string, never>, typeof CANVAS_EDGE_TYPE>;
+export type CanvasEdge = Edge<CanvasEdgeData, typeof CANVAS_EDGE_TYPE>;

@@ -1,12 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { Bot, PanelLeftClose, PanelLeftOpen, Share2 } from "lucide-react";
+import {
+  Bot,
+  LayoutTemplate,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Share2,
+} from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 
-import { CanvasRoom } from "@/components/editor/canvas-room";
+import {
+  CanvasRoom,
+  type CanvasTemplateImportRequest,
+} from "@/components/editor/canvas-room";
 import { ProjectDialogs } from "@/components/editor/project-dialogs";
 import { ProjectSiderbar } from "@/components/editor/project-siderbar";
+import type { CanvasTemplate } from "@/components/editor/start-templates";
+import { StartTemplatesModal } from "@/components/editor/start-templates-modal";
 import { ShareDialog } from "@/components/editor/share-dialog";
 import { Button } from "@/components/ui/button";
 import { useProjectActions } from "@/hooks/use-project-actions";
@@ -30,11 +41,21 @@ export function EditorWorkspaceShell({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(true);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
+  const [templateImportRequest, setTemplateImportRequest] =
+    useState<CanvasTemplateImportRequest | null>(null);
   const projectActions = useProjectActions(activeProjectId);
 
   function selectProject(projectId: string) {
     projectActions.selectProject(projectId);
     setIsSidebarOpen(false);
+  }
+
+  function importTemplate(template: CanvasTemplate) {
+    setTemplateImportRequest({
+      id: Date.now(),
+      template,
+    });
   }
 
   return (
@@ -61,6 +82,15 @@ export function EditorWorkspaceShell({
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            type="button"
+            onClick={() => setIsTemplatesOpen(true)}
+          >
+            <LayoutTemplate />
+            Templates
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -97,7 +127,10 @@ export function EditorWorkspaceShell({
       />
 
       <section className="absolute inset-x-0 bottom-0 top-14 bg-base">
-        <CanvasRoom roomId={activeProjectId} />
+        <CanvasRoom
+          roomId={activeProjectId}
+          templateImportRequest={templateImportRequest}
+        />
       </section>
 
       <aside
@@ -132,6 +165,11 @@ export function EditorWorkspaceShell({
         onRenameNameChange={projectActions.setRenameName}
         onRenameOpenChange={projectActions.setRenameOpen}
         onRenameProject={projectActions.renameSelectedProject}
+      />
+      <StartTemplatesModal
+        open={isTemplatesOpen}
+        onImport={importTemplate}
+        onOpenChange={setIsTemplatesOpen}
       />
       <ShareDialog
         canManageAccess={canManageAccess}
