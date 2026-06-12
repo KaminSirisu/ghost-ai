@@ -4,6 +4,7 @@ import { Component, ReactNode } from "react";
 import { ClientSideSuspense, LiveblocksProvider, RoomProvider } from "@liveblocks/react";
 
 import { CollaborativeCanvas } from "@/components/editor/collaborative-canvas";
+import type { CanvasSaveStatus } from "@/hooks/use-canvas-autosave";
 import type { CanvasTemplate } from "@/components/editor/start-templates";
 
 export interface CanvasTemplateImportRequest {
@@ -12,6 +13,9 @@ export interface CanvasTemplateImportRequest {
 }
 
 interface CanvasRoomProps {
+  isAiSidebarOpen: boolean;
+  onSaveCanvasReady: (saveCanvas: (() => Promise<void>) | null) => void;
+  onSaveStatusChange: (status: CanvasSaveStatus) => void;
   roomId: string;
   templateImportRequest: CanvasTemplateImportRequest | null;
 }
@@ -25,7 +29,13 @@ interface CanvasErrorBoundaryState {
   hasError: boolean;
 }
 
-export function CanvasRoom({ roomId, templateImportRequest }: CanvasRoomProps) {
+export function CanvasRoom({
+  isAiSidebarOpen,
+  onSaveCanvasReady,
+  onSaveStatusChange,
+  roomId,
+  templateImportRequest,
+}: CanvasRoomProps) {
   return (
     <CanvasErrorBoundary fallback={<CanvasConnectionError />}>
       <LiveblocksProvider
@@ -48,12 +58,16 @@ export function CanvasRoom({ roomId, templateImportRequest }: CanvasRoomProps) {
           id={roomId}
           initialPresence={{
             cursor: null,
-            isThinking: false,
+            thinking: false,
           }}
         >
           <ClientSideSuspense fallback={<CanvasLoading />}>
             {() => (
               <CollaborativeCanvas
+                isAiSidebarOpen={isAiSidebarOpen}
+                onSaveCanvasReady={onSaveCanvasReady}
+                onSaveStatusChange={onSaveStatusChange}
+                projectId={roomId}
                 templateImportRequest={templateImportRequest}
               />
             )}

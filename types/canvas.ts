@@ -46,6 +46,10 @@ export const DEFAULT_NODE_SIZES: Record<NodeShape, CanvasNodeSize> = {
 export const CANVAS_SHAPE_DRAG_MIME = "application/x-ghost-ai-shape";
 
 export interface CanvasShapeDragPayload {
+  dragOffset?: {
+    x: number;
+    y: number;
+  };
   shape: NodeShape;
   size: CanvasNodeSize;
 }
@@ -63,3 +67,9 @@ export interface CanvasEdgeData extends Record<string, unknown> {
 
 export type CanvasNode = Node<CanvasNodeData, typeof CANVAS_NODE_TYPE>;
 export type CanvasEdge = Edge<CanvasEdgeData, typeof CANVAS_EDGE_TYPE>;
+
+export interface CanvasSnapshot {
+  edges: CanvasEdge[];
+  nodes: CanvasNode[];
+  savedAt: string;
+}
