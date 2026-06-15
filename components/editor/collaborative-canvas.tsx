@@ -31,13 +31,14 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import {
   useCanRedo,
   useCanUndo,
+  useEventListener,
   useOthers,
   useRedo,
   useUndo,
   useUpdateMyPresence,
 } from "@liveblocks/react";
 import { useLiveblocksFlow } from "@liveblocks/react-flow";
-import { Maximize2, Minus, Plus, Redo2, Undo2 } from "lucide-react";
+import { LoaderCircle, Maximize2, Minus, Plus, Redo2, Undo2 } from "lucide-react";
 import Image from "next/image";
 
 import { CanvasEdge as CanvasEdgeRenderer } from "@/components/editor/canvas-edge";
@@ -61,6 +62,7 @@ import {
   type CanvasShapeDragPayload,
   type NodeShape,
 } from "@/types/canvas";
+import { validateAiStatusFeedPayload } from "@/types/tasks";
 
 const INITIAL_NODES: CanvasNode[] = [];
 const INITIAL_EDGES: CanvasEdge[] = [];
@@ -83,6 +85,7 @@ interface CollaborativeCanvasProps {
   isAiSidebarOpen: boolean;
   onSaveStatusChange: (status: CanvasSaveStatus) => void;
   onSaveCanvasReady: (saveCanvas: (() => Promise<void>) | null) => void;
+  onSnapshotChange: (snapshot: { edges: CanvasEdge[]; nodes: CanvasNode[] }) => void;
   projectId: string;
   templateImportRequest: CanvasTemplateImportRequest | null;
 }
@@ -90,12 +93,21 @@ interface CollaborativeCanvasProps {
 interface PresenceParticipant {
   avatar: string;
   color: string;
+  connectionId: number;
   cursor: {
     x: number;
     y: number;
   } | null;
-  id: string;
   name: string;
+  thinking: boolean;
+  userId: string;
+}
+
+interface AiStatusMessage {
+  id: string;
+  level: "info" | "success" | "error";
+  text?: string;
+  createdAt: string;
 }
 
 function isNodeShape(value: unknown): value is NodeShape {
@@ -173,6 +185,7 @@ export function CollaborativeCanvas({
   isAiSidebarOpen,
   onSaveCanvasReady,
   onSaveStatusChange,
+  onSnapshotChange,
   projectId,
   templateImportRequest,
 }: CollaborativeCanvasProps) {
@@ -197,6 +210,7 @@ export function CollaborativeCanvas({
   const [flowInstance, setFlowInstance] =
     useState<ReactFlowInstance<CanvasNode, CanvasEdge> | null>(null);
   const [hasCheckedSavedCanvas, setHasCheckedSavedCanvas] = useState(false);
+  const [aiStatuses, setAiStatuses] = useState<AiStatusMessage[]>([]);
   const undo = useUndo();
   const redo = useRedo();
   const canUndo = useCanUndo();
@@ -228,12 +242,41 @@ export function CollaborativeCanvas({
     projectId,
   });
 
+  useEventListener(({ event }) => {
+    if (event.type !== "AI_STATUS") {
+      return;
+    }
+
+    const payload = validateAiStatusFeedPayload({
+      level: event.level,
+      text: event.message,
+    });
+
+    if (!payload) {
+      return;
+    }
+
+    setAiStatuses((currentStatuses) => [
+      {
+        id: event.id,
+        level: payload.level ?? "info",
+        text: payload.text,
+        createdAt: event.createdAt,
+      },
+      ...currentStatuses.filter((status) => status.id !== event.id),
+    ].slice(0, 1));
+  });
+
   useEffect(() => {
     latestCanvasRef.current = {
       edges,
       nodes,
     };
-  }, [edges, nodes]);
+    onSnapshotChange({
+      edges: [...edges],
+      nodes: [...nodes],
+    });
+  }, [edges, nodes, onSnapshotChange]);
 
   useEffect(() => {
     onSaveStatusChange(saveStatus);
@@ -410,9 +453,11 @@ export function CollaborativeCanvas({
             ({
               avatar: participant.info.avatar,
               color: participant.info.color,
+              connectionId: participant.connectionId,
               cursor: participant.presence.cursor,
-              id: participant.id,
               name: participant.info.name,
+              thinking: participant.presence.thinking,
+              userId: participant.id,
             }) satisfies PresenceParticipant,
         ),
     [currentUserId, others],
@@ -757,6 +802,7 @@ export function CollaborativeCanvas({
               collaborators={collaborators}
               isAiSidebarOpen={isAiSidebarOpen}
             />
+            <AiStatusFeed statuses={aiStatuses} />
             <LiveCursors collaborators={collaborators} />
             <ShapePanel />
             <CanvasControlBar
@@ -804,8 +850,12 @@ function PresenceAvatarGroup({
   collaborators,
   isAiSidebarOpen,
 }: PresenceAvatarGroupProps) {
-  const visibleCollaborators = collaborators.slice(0, 5);
-  const overflowCount = Math.max(collaborators.length - visibleCollaborators.length, 0);
+  const dedupedCollaborators = dedupeCollaboratorsByUser(collaborators);
+  const visibleCollaborators = dedupedCollaborators.slice(0, 5);
+  const overflowCount = Math.max(
+    dedupedCollaborators.length - visibleCollaborators.length,
+    0,
+  );
 
   return (
     <Panel
@@ -820,7 +870,7 @@ function PresenceAvatarGroup({
           <div className="flex -space-x-2">
             {visibleCollaborators.map((collaborator) => (
               <CollaboratorAvatar
-                key={collaborator.id}
+                key={collaborator.userId}
                 participant={collaborator}
               />
             ))}
@@ -848,6 +898,44 @@ function PresenceAvatarGroup({
   );
 }
 
+function AiStatusFeed({ statuses }: { statuses: AiStatusMessage[] }) {
+  if (statuses.length === 0) {
+    return null;
+  }
+
+  return (
+    <Panel
+      position="top-left"
+      className="z-20 m-4 mt-20 w-80 rounded-2xl border border-surface-border bg-surface/90 p-3 shadow-2xl shadow-base/50 backdrop-blur"
+    >
+      <div className="space-y-2" aria-live="polite">
+        {statuses.map((status) => (
+          <div
+            key={status.id}
+            className="rounded-xl border border-surface-border bg-elevated px-3 py-2"
+          >
+            <p
+              className={[
+                "text-xs font-semibold",
+                status.level === "error"
+                  ? "text-state-error"
+                  : status.level === "success"
+                    ? "text-state-success"
+                    : "text-ai-text",
+              ].join(" ")}
+            >
+              Ghost AI
+            </p>
+            <p className="mt-1 text-sm leading-5 text-copy-secondary">
+              {status.text || "Ghost AI status updated."}
+            </p>
+          </div>
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
 interface CollaboratorAvatarProps {
   participant: PresenceParticipant;
 }
@@ -855,7 +943,10 @@ interface CollaboratorAvatarProps {
 function CollaboratorAvatar({ participant }: CollaboratorAvatarProps) {
   return (
     <div
-      className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-surface-border bg-elevated text-xs font-semibold text-copy-primary ring-2 ring-base"
+      className={[
+        "flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-surface-border bg-elevated text-xs font-semibold text-copy-primary ring-2 ring-base",
+        participant.thinking ? "animate-pulse ring-ai" : "",
+      ].join(" ")}
       title={participant.name}
       aria-label={participant.name}
     >
@@ -899,7 +990,7 @@ function LiveCursors({ collaborators }: LiveCursorsProps) {
 
         return (
           <div
-            key={collaborator.id}
+            key={collaborator.connectionId}
             className="pointer-events-none absolute z-30 flex items-start gap-1"
             style={{
               left: cursor.x,
@@ -914,12 +1005,15 @@ function LiveCursors({ collaborators }: LiveCursorsProps) {
               }}
             />
             <div
-              className="rounded-xl px-2 py-1 text-xs font-medium leading-none shadow-lg"
+              className="flex items-center gap-1.5 rounded-xl px-2 py-1 text-xs font-medium leading-none shadow-lg"
               style={{
                 backgroundColor: collaborator.color,
                 color: "var(--bg-base)",
               }}
             >
+              {collaborator.thinking ? (
+                <LoaderCircle className="h-3 w-3 animate-spin" />
+              ) : null}
               {collaborator.name}
             </div>
           </div>
@@ -927,6 +1021,27 @@ function LiveCursors({ collaborators }: LiveCursorsProps) {
       })}
     </ViewportPortal>
   );
+}
+
+function dedupeCollaboratorsByUser(collaborators: PresenceParticipant[]) {
+  const uniqueCollaborators = new Map<string, PresenceParticipant>();
+
+  for (const collaborator of collaborators) {
+    const existingCollaborator = uniqueCollaborators.get(collaborator.userId);
+
+    if (!existingCollaborator) {
+      uniqueCollaborators.set(collaborator.userId, collaborator);
+      continue;
+    }
+
+    uniqueCollaborators.set(collaborator.userId, {
+      ...existingCollaborator,
+      cursor: existingCollaborator.cursor ?? collaborator.cursor,
+      thinking: existingCollaborator.thinking || collaborator.thinking,
+    });
+  }
+
+  return [...uniqueCollaborators.values()];
 }
 
 function getInitials(name: string) {

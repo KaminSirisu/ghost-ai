@@ -17,7 +17,6 @@ import {
   CanvasRoom,
   type CanvasTemplateImportRequest,
 } from "@/components/editor/canvas-room";
-import { AiSidebar } from "@/components/editor/ai-sidebar";
 import { ProjectDialogs } from "@/components/editor/project-dialogs";
 import { ProjectSiderbar } from "@/components/editor/project-siderbar";
 import type { CanvasTemplate } from "@/components/editor/start-templates";
@@ -156,17 +155,13 @@ export function EditorWorkspaceShell({
         <CanvasRoom
           key={activeProjectId}
           isAiSidebarOpen={isAiSidebarOpen}
+          onAiSidebarClose={() => setIsAiSidebarOpen(false)}
           onSaveCanvasReady={handleSaveCanvasReady}
           onSaveStatusChange={setCanvasSaveStatus}
           roomId={activeProjectId}
           templateImportRequest={templateImportRequest}
         />
       </section>
-
-      <AiSidebar
-        isOpen={isAiSidebarOpen}
-        onClose={() => setIsAiSidebarOpen(false)}
-      />
 
       <ProjectDialogs
         createName={projectActions.createName}

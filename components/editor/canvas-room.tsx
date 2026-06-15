@@ -1,19 +1,27 @@
 "use client";
 
-import { Component, ReactNode } from "react";
+import { Component, ReactNode, useState } from "react";
 import { ClientSideSuspense, LiveblocksProvider, RoomProvider } from "@liveblocks/react";
 
+import { AiSidebar } from "@/components/editor/ai-sidebar";
 import { CollaborativeCanvas } from "@/components/editor/collaborative-canvas";
 import type { CanvasSaveStatus } from "@/hooks/use-canvas-autosave";
 import type { CanvasTemplate } from "@/components/editor/start-templates";
+import type { CanvasEdge, CanvasNode } from "@/types/canvas";
 
 export interface CanvasTemplateImportRequest {
   id: number;
   template: CanvasTemplate;
 }
 
+export interface CanvasSnapshotUpdate {
+  edges: CanvasEdge[];
+  nodes: CanvasNode[];
+}
+
 interface CanvasRoomProps {
   isAiSidebarOpen: boolean;
+  onAiSidebarClose: () => void;
   onSaveCanvasReady: (saveCanvas: (() => Promise<void>) | null) => void;
   onSaveStatusChange: (status: CanvasSaveStatus) => void;
   roomId: string;
@@ -31,11 +39,17 @@ interface CanvasErrorBoundaryState {
 
 export function CanvasRoom({
   isAiSidebarOpen,
+  onAiSidebarClose,
   onSaveCanvasReady,
   onSaveStatusChange,
   roomId,
   templateImportRequest,
 }: CanvasRoomProps) {
+  const [canvasSnapshot, setCanvasSnapshot] = useState<CanvasSnapshotUpdate>({
+    edges: [],
+    nodes: [],
+  });
+
   return (
     <CanvasErrorBoundary fallback={<CanvasConnectionError />}>
       <LiveblocksProvider
@@ -67,11 +81,18 @@ export function CanvasRoom({
                 isAiSidebarOpen={isAiSidebarOpen}
                 onSaveCanvasReady={onSaveCanvasReady}
                 onSaveStatusChange={onSaveStatusChange}
+                onSnapshotChange={setCanvasSnapshot}
                 projectId={roomId}
                 templateImportRequest={templateImportRequest}
               />
             )}
           </ClientSideSuspense>
+          <AiSidebar
+            canvasSnapshot={canvasSnapshot}
+            isOpen={isAiSidebarOpen}
+            onClose={onAiSidebarClose}
+            roomId={roomId}
+          />
         </RoomProvider>
       </LiveblocksProvider>
     </CanvasErrorBoundary>

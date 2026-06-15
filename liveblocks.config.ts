@@ -25,10 +25,29 @@ declare global {
     };
 
     // Custom events, for useBroadcastEvent, useEventListener
-    RoomEvent: never;
+    RoomEvent:
+      | {
+          type: "AI_STATUS";
+          id: string;
+          level: "info" | "success" | "error";
+          message: string;
+          createdAt: string;
+        };
       // Example has two events, using a union
       // | { type: "PLAY" } 
       // | { type: "REACTION"; emoji: "🔥" };
+
+    FeedMessageData:
+      | {
+          level?: "info" | "success" | "error";
+          text?: string;
+        }
+      | {
+          sender: string;
+          role: "user" | "assistant";
+          content: string;
+          timestamp: string;
+        };
 
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
     ThreadMetadata: {
