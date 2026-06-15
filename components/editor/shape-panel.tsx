@@ -50,7 +50,13 @@ function handleShapeDragStart(
   shape: CanvasNodeShape,
 ) {
   const size = DEFAULT_NODE_SIZES[shape];
+  const buttonRect = event.currentTarget.getBoundingClientRect();
+  const dragOffset = {
+    x: event.clientX - buttonRect.left,
+    y: event.clientY - buttonRect.top,
+  };
   const payload: CanvasShapeDragPayload = {
+    dragOffset,
     shape,
     size,
   };
@@ -65,7 +71,7 @@ function handleShapeDragStart(
   dragImage.style.width = "1px";
   dragImage.style.height = "1px";
   document.body.appendChild(dragImage);
-  event.dataTransfer.setDragImage(dragImage, 0, 0);
+  event.dataTransfer.setDragImage(dragImage, dragOffset.x, dragOffset.y);
   window.setTimeout(() => {
     dragImage.remove();
   }, 0);

@@ -2,6 +2,8 @@
 
 import {
   DragEvent,
+  KeyboardEvent,
+  MouseEvent,
   useEffect,
   useCallback,
   useMemo,
@@ -15,6 +17,7 @@ import {
   ConnectionLineType,
   ConnectionMode,
   MarkerType,
+  Panel,
   type Connection,
   type EdgeTypes,
   type EdgeChange,
@@ -22,10 +25,21 @@ import {
   type NodeTypes,
   ReactFlow,
   type ReactFlowInstance,
+  ViewportPortal,
 } from "@xyflow/react";
-import { useCanRedo, useCanUndo, useRedo, useUndo } from "@liveblocks/react";
+import { UserButton, useUser } from "@clerk/nextjs";
+import {
+  useCanRedo,
+  useCanUndo,
+  useEventListener,
+  useOthers,
+  useRedo,
+  useUndo,
+  useUpdateMyPresence,
+} from "@liveblocks/react";
 import { useLiveblocksFlow } from "@liveblocks/react-flow";
-import { Maximize2, Minus, Plus, Redo2, Undo2 } from "lucide-react";
+import { LoaderCircle, Maximize2, Minus, Plus, Redo2, Undo2 } from "lucide-react";
+import Image from "next/image";
 
 import { CanvasEdge as CanvasEdgeRenderer } from "@/components/editor/canvas-edge";
 import { CanvasEdgeActionsProvider } from "@/components/editor/canvas-edge-actions";
@@ -33,18 +47,22 @@ import { CanvasNode as CanvasNodeRenderer } from "@/components/editor/canvas-nod
 import { CanvasNodeActionsProvider } from "@/components/editor/canvas-node-actions";
 import type { CanvasTemplateImportRequest } from "@/components/editor/canvas-room";
 import { ShapePanel } from "@/components/editor/shape-panel";
+import { useCanvasAutosave, type CanvasSaveStatus } from "@/hooks/use-canvas-autosave";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import {
   CANVAS_SHAPE_DRAG_MIME,
   CANVAS_EDGE_TYPE,
   CANVAS_NODE_TYPE,
   DEFAULT_NODE_COLOR,
+  DEFAULT_NODE_SIZES,
   NODE_SHAPES,
   CanvasEdge,
   CanvasNode,
+  type CanvasSnapshot,
   type CanvasShapeDragPayload,
   type NodeShape,
 } from "@/types/canvas";
+import { validateAiStatusFeedPayload } from "@/types/tasks";
 
 const INITIAL_NODES: CanvasNode[] = [];
 const INITIAL_EDGES: CanvasEdge[] = [];
@@ -64,7 +82,32 @@ const EDGE_INTERACTION_WIDTH = 24;
 const VIEWPORT_ANIMATION_DURATION_MS = 180;
 
 interface CollaborativeCanvasProps {
+  isAiSidebarOpen: boolean;
+  onSaveStatusChange: (status: CanvasSaveStatus) => void;
+  onSaveCanvasReady: (saveCanvas: (() => Promise<void>) | null) => void;
+  onSnapshotChange: (snapshot: { edges: CanvasEdge[]; nodes: CanvasNode[] }) => void;
+  projectId: string;
   templateImportRequest: CanvasTemplateImportRequest | null;
+}
+
+interface PresenceParticipant {
+  avatar: string;
+  color: string;
+  connectionId: number;
+  cursor: {
+    x: number;
+    y: number;
+  } | null;
+  name: string;
+  thinking: boolean;
+  userId: string;
+}
+
+interface AiStatusMessage {
+  id: string;
+  level: "info" | "success" | "error";
+  text?: string;
+  createdAt: string;
 }
 
 function isNodeShape(value: unknown): value is NodeShape {
@@ -87,7 +130,18 @@ function parseShapeDragPayload(data: string): CanvasShapeDragPayload | null {
       return null;
     }
 
+    const dragOffset =
+      payload.dragOffset &&
+      typeof payload.dragOffset.x === "number" &&
+      typeof payload.dragOffset.y === "number"
+        ? {
+            x: payload.dragOffset.x,
+            y: payload.dragOffset.y,
+          }
+        : undefined;
+
     return {
+      dragOffset,
       shape: payload.shape,
       size: {
         width: payload.size.width,
@@ -99,17 +153,72 @@ function parseShapeDragPayload(data: string): CanvasShapeDragPayload | null {
   }
 }
 
+function normalizeCanvasNode(node: CanvasNode): CanvasNode {
+  const shape = isNodeShape(node.data.shape) ? node.data.shape : "rectangle";
+  const fallbackSize = DEFAULT_NODE_SIZES[shape];
+  const width = node.width ?? node.initialWidth ?? fallbackSize.width;
+  const height = node.height ?? node.initialHeight ?? fallbackSize.height;
+
+  return {
+    ...node,
+    type: CANVAS_NODE_TYPE,
+    data: {
+      ...node.data,
+      color:
+        typeof node.data.color === "string"
+          ? node.data.color
+          : DEFAULT_NODE_COLOR.fill,
+      textColor:
+        typeof node.data.textColor === "string"
+          ? node.data.textColor
+          : DEFAULT_NODE_COLOR.text,
+      shape,
+    },
+    height,
+    initialHeight: node.initialHeight ?? height,
+    initialWidth: node.initialWidth ?? width,
+    width,
+  };
+}
+
 export function CollaborativeCanvas({
+  isAiSidebarOpen,
+  onSaveCanvasReady,
+  onSaveStatusChange,
+  onSnapshotChange,
+  projectId,
   templateImportRequest,
 }: CollaborativeCanvasProps) {
   const nodeCounterRef = useRef(0);
+  const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const importedTemplateRequestIdRef = useRef<number | null>(null);
+  const savedCanvasLoadAttemptedRef = useRef(false);
+  const latestCanvasRef = useRef<{
+    edges: CanvasEdge[];
+    nodes: CanvasNode[];
+  }>({
+    edges: [],
+    nodes: [],
+  });
+  const selectedCanvasRef = useRef<{
+    edges: CanvasEdge[];
+    nodes: CanvasNode[];
+  }>({
+    edges: [],
+    nodes: [],
+  });
   const [flowInstance, setFlowInstance] =
     useState<ReactFlowInstance<CanvasNode, CanvasEdge> | null>(null);
+  const [hasCheckedSavedCanvas, setHasCheckedSavedCanvas] = useState(false);
+  const [aiStatuses, setAiStatuses] = useState<AiStatusMessage[]>([]);
   const undo = useUndo();
   const redo = useRedo();
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
+  const others = useOthers();
+  const updateMyPresence = useUpdateMyPresence();
+  const { user } = useUser();
+  const currentUserId = user?.id ?? null;
   const {
     nodes,
     edges,
@@ -126,6 +235,142 @@ export function CollaborativeCanvas({
       initial: INITIAL_EDGES,
     },
   });
+  const { saveCanvas, status: saveStatus } = useCanvasAutosave({
+    edges,
+    enabled: hasCheckedSavedCanvas,
+    nodes,
+    projectId,
+  });
+
+  useEventListener(({ event }) => {
+    if (event.type !== "AI_STATUS") {
+      return;
+    }
+
+    const payload = validateAiStatusFeedPayload({
+      level: event.level,
+      text: event.message,
+    });
+
+    if (!payload) {
+      return;
+    }
+
+    setAiStatuses((currentStatuses) => [
+      {
+        id: event.id,
+        level: payload.level ?? "info",
+        text: payload.text,
+        createdAt: event.createdAt,
+      },
+      ...currentStatuses.filter((status) => status.id !== event.id),
+    ].slice(0, 1));
+  });
+
+  useEffect(() => {
+    latestCanvasRef.current = {
+      edges,
+      nodes,
+    };
+    onSnapshotChange({
+      edges: [...edges],
+      nodes: [...nodes],
+    });
+  }, [edges, nodes, onSnapshotChange]);
+
+  useEffect(() => {
+    onSaveStatusChange(saveStatus);
+  }, [onSaveStatusChange, saveStatus]);
+
+  useEffect(() => {
+    onSaveCanvasReady(saveCanvas);
+
+    return () => {
+      onSaveCanvasReady(null);
+    };
+  }, [onSaveCanvasReady, saveCanvas]);
+
+  useEffect(() => {
+    if (savedCanvasLoadAttemptedRef.current) {
+      return;
+    }
+
+    if (nodes.length > 0 || edges.length > 0) {
+      savedCanvasLoadAttemptedRef.current = true;
+      window.queueMicrotask(() => {
+        setHasCheckedSavedCanvas(true);
+      });
+      return;
+    }
+
+    savedCanvasLoadAttemptedRef.current = true;
+    let isCancelled = false;
+
+    async function loadSavedCanvas() {
+      try {
+        const response = await fetch(`/api/projects/${projectId}/canvas`, {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error("Saved canvas load failed");
+        }
+
+        const body = (await response.json()) as { canvas: CanvasSnapshot | null };
+
+        if (!body.canvas || isCancelled) {
+          return;
+        }
+
+        const latestCanvas = latestCanvasRef.current;
+
+        if (latestCanvas.nodes.length > 0 || latestCanvas.edges.length > 0) {
+          return;
+        }
+
+        const nodeAdditions = body.canvas.nodes.map(
+          (node) =>
+            ({
+              type: "add",
+              item: normalizeCanvasNode(node),
+            }) satisfies NodeChange<CanvasNode>,
+        );
+        const edgeAdditions = body.canvas.edges.map(
+          (edge) =>
+            ({
+              type: "add",
+              item: edge,
+            }) satisfies EdgeChange<CanvasEdge>,
+        );
+
+        if (nodeAdditions.length === 0 && edgeAdditions.length === 0) {
+          return;
+        }
+
+        onNodesChange(nodeAdditions);
+        onEdgesChange(edgeAdditions);
+
+        window.requestAnimationFrame(() => {
+          void flowInstance?.fitView({
+            duration: VIEWPORT_ANIMATION_DURATION_MS,
+            padding: 0.2,
+          });
+        });
+      } catch (error) {
+        console.error(error);
+      } finally {
+        if (!isCancelled) {
+          setHasCheckedSavedCanvas(true);
+        }
+      }
+    }
+
+    void loadSavedCanvas();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [edges.length, flowInstance, nodes.length, onEdgesChange, onNodesChange, projectId]);
 
   const createNodeId = useCallback((shape: NodeShape) => {
     nodeCounterRef.current += 1;
@@ -152,25 +397,41 @@ export function CollaborativeCanvas({
 
       event.preventDefault();
 
+      const canvasBounds = canvasWrapperRef.current?.getBoundingClientRect();
+
+      if (
+        canvasBounds &&
+        (event.clientX < canvasBounds.left ||
+          event.clientX > canvasBounds.right ||
+          event.clientY < canvasBounds.top ||
+          event.clientY > canvasBounds.bottom)
+      ) {
+        return;
+      }
+
       const position = flowInstance.screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
+      const nodeSize = payload.size;
 
       const newNode: CanvasNode = {
         id: createNodeId(payload.shape),
         type: CANVAS_NODE_TYPE,
-        position,
+        position: {
+          x: position.x - nodeSize.width / 2,
+          y: position.y - nodeSize.height / 2,
+        },
         data: {
           label: "",
           color: DEFAULT_NODE_COLOR.fill,
           textColor: DEFAULT_NODE_COLOR.text,
           shape: payload.shape,
         },
-        width: payload.size.width,
-        height: payload.size.height,
-        initialWidth: payload.size.width,
-        initialHeight: payload.size.height,
+        width: nodeSize.width,
+        height: nodeSize.height,
+        initialWidth: nodeSize.width,
+        initialHeight: nodeSize.height,
       };
 
       onNodesChange([
@@ -182,6 +443,47 @@ export function CollaborativeCanvas({
     },
     [createNodeId, flowInstance, onNodesChange],
   );
+
+  const collaborators = useMemo(
+    () =>
+      others
+        .filter((participant) => participant.id !== currentUserId)
+        .map(
+          (participant) =>
+            ({
+              avatar: participant.info.avatar,
+              color: participant.info.color,
+              connectionId: participant.connectionId,
+              cursor: participant.presence.cursor,
+              name: participant.info.name,
+              thinking: participant.presence.thinking,
+              userId: participant.id,
+            }) satisfies PresenceParticipant,
+        ),
+    [currentUserId, others],
+  );
+
+  const handleCanvasMouseMove = useCallback(
+    (event: MouseEvent) => {
+      if (!flowInstance) {
+        return;
+      }
+
+      updateMyPresence({
+        cursor: flowInstance.screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        }),
+      });
+    },
+    [flowInstance, updateMyPresence],
+  );
+
+  const handleCanvasMouseLeave = useCallback(() => {
+    updateMyPresence({
+      cursor: null,
+    });
+  }, [updateMyPresence]);
 
   const updateNodeLabel = useCallback(
     (nodeId: string, label: string) => {
@@ -278,6 +580,62 @@ export function CollaborativeCanvas({
     [onConnect],
   );
 
+  const handleSelectionChange = useCallback(
+    ({ nodes, edges }: { nodes: CanvasNode[]; edges: CanvasEdge[] }) => {
+      selectedCanvasRef.current = {
+        edges,
+        nodes,
+      };
+    },
+    [],
+  );
+
+  const handleCanvasKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (
+        (event.key !== "Delete" && event.key !== "Backspace") ||
+        isEditableEventTarget(event.target)
+      ) {
+        return;
+      }
+
+      const selectedNodes = selectedCanvasRef.current.nodes;
+      const selectedEdges = selectedCanvasRef.current.edges;
+      const selectedNodeIds = new Set(selectedNodes.map((node) => node.id));
+      const edgesToDelete = latestCanvasRef.current.edges.filter(
+        (edge) =>
+          selectedEdges.some((selectedEdge) => selectedEdge.id === edge.id) ||
+          selectedNodeIds.has(edge.source) ||
+          selectedNodeIds.has(edge.target),
+      );
+
+      if (selectedNodes.length === 0 && edgesToDelete.length === 0) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      onDelete({
+        edges: edgesToDelete,
+        nodes: selectedNodes,
+      });
+    },
+    [onDelete],
+  );
+
+  const handleCanvasPointerDown = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      if (isEditableEventTarget(event.target)) {
+        return;
+      }
+
+      canvasWrapperRef.current?.focus({
+        preventScroll: true,
+      });
+    },
+    [],
+  );
+
   useEffect(() => {
     if (
       !templateImportRequest ||
@@ -307,13 +665,8 @@ export function CollaborativeCanvas({
         ({
           type: "add",
           item: {
-            ...node,
-            data: {
-              ...node.data,
-            },
-            position: {
-              ...node.position,
-            },
+            ...normalizeCanvasNode(node),
+            position: { ...node.position },
           },
         }) satisfies NodeChange<CanvasNode>,
     );
@@ -414,51 +767,293 @@ export function CollaborativeCanvas({
   return (
     <CanvasNodeActionsProvider value={nodeActions}>
       <CanvasEdgeActionsProvider value={edgeActions}>
-        <ReactFlow
-          className="bg-base"
-          nodes={nodes}
-          edges={edges}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={handleConnect}
-          onDelete={onDelete}
-          onInit={setFlowInstance}
-          connectionLineType={ConnectionLineType.SmoothStep}
-          connectionMode={ConnectionMode.Loose}
-          defaultEdgeOptions={defaultEdgeOptions}
-          defaultMarkerColor="var(--text-primary)"
-          defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-          edgeTypes={EDGE_TYPES}
-          fitView
-          nodeTypes={NODE_TYPES}
-          proOptions={{ hideAttribution: true }}
+        <div
+          ref={canvasWrapperRef}
+          className="h-full w-full outline-none"
+          tabIndex={0}
+          onKeyDown={handleCanvasKeyDown}
+          onMouseDown={handleCanvasPointerDown}
         >
-          <ShapePanel />
-          <CanvasControlBar
-            canRedo={canRedo}
-            canUndo={canUndo}
-            isViewportReady={Boolean(flowInstance)}
-            onFitView={handleFitView}
-            onRedo={handleRedo}
-            onUndo={handleUndo}
-            onZoomIn={handleZoomIn}
-            onZoomOut={handleZoomOut}
-          />
-          <Background
-            variant={BackgroundVariant.Dots}
-            gap={24}
-            size={1}
-            color="var(--border-subtle)"
-          />
-        </ReactFlow>
+          <ReactFlow
+            className="h-full w-full bg-base"
+            nodes={nodes}
+            edges={edges}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onMouseLeave={handleCanvasMouseLeave}
+            onMouseMove={handleCanvasMouseMove}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onSelectionChange={handleSelectionChange}
+            onConnect={handleConnect}
+            onDelete={onDelete}
+            onInit={setFlowInstance}
+            connectionLineType={ConnectionLineType.SmoothStep}
+            connectionMode={ConnectionMode.Loose}
+            defaultEdgeOptions={defaultEdgeOptions}
+            defaultMarkerColor="var(--text-primary)"
+            defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+            deleteKeyCode={null}
+            edgeTypes={EDGE_TYPES}
+            nodeTypes={NODE_TYPES}
+            proOptions={{ hideAttribution: true }}
+          >
+            <PresenceAvatarGroup
+              collaborators={collaborators}
+              isAiSidebarOpen={isAiSidebarOpen}
+            />
+            <AiStatusFeed statuses={aiStatuses} />
+            <LiveCursors collaborators={collaborators} />
+            <ShapePanel />
+            <CanvasControlBar
+              canRedo={canRedo}
+              canUndo={canUndo}
+              isViewportReady={Boolean(flowInstance)}
+              onFitView={handleFitView}
+              onRedo={handleRedo}
+              onUndo={handleUndo}
+              onZoomIn={handleZoomIn}
+              onZoomOut={handleZoomOut}
+            />
+            <Background
+              variant={BackgroundVariant.Dots}
+              gap={24}
+              size={1}
+              color="var(--border-subtle)"
+            />
+          </ReactFlow>
+        </div>
       </CanvasEdgeActionsProvider>
     </CanvasNodeActionsProvider>
   );
 }
 
 export const defaultCanvasNodeType = CANVAS_NODE_TYPE;
+
+function isEditableEventTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return Boolean(
+    target.closest("input, textarea, select, [contenteditable='true']") ||
+      target.isContentEditable,
+  );
+}
+
+interface PresenceAvatarGroupProps {
+  collaborators: PresenceParticipant[];
+  isAiSidebarOpen: boolean;
+}
+
+function PresenceAvatarGroup({
+  collaborators,
+  isAiSidebarOpen,
+}: PresenceAvatarGroupProps) {
+  const dedupedCollaborators = dedupeCollaboratorsByUser(collaborators);
+  const visibleCollaborators = dedupedCollaborators.slice(0, 5);
+  const overflowCount = Math.max(
+    dedupedCollaborators.length - visibleCollaborators.length,
+    0,
+  );
+
+  return (
+    <Panel
+      position="top-right"
+      className={[
+        "z-20 m-4 flex items-center rounded-full border border-surface-border bg-surface/90 px-2 py-2 shadow-2xl shadow-base/50 backdrop-blur transition-[margin] duration-300",
+        isAiSidebarOpen ? "md:mr-[22rem]" : "",
+      ].join(" ")}
+    >
+      {visibleCollaborators.length > 0 ? (
+        <>
+          <div className="flex -space-x-2">
+            {visibleCollaborators.map((collaborator) => (
+              <CollaboratorAvatar
+                key={collaborator.userId}
+                participant={collaborator}
+              />
+            ))}
+            {overflowCount > 0 ? (
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-surface-border bg-elevated text-xs font-semibold text-copy-secondary ring-2 ring-base">
+                +{overflowCount}
+              </div>
+            ) : null}
+          </div>
+          <div className="mx-3 h-6 w-px bg-surface-border-subtle" />
+        </>
+      ) : null}
+
+      <div className="flex h-9 w-9 items-center justify-center">
+        <UserButton
+          appearance={{
+            elements: {
+              avatarBox: "h-9 w-9",
+              userButtonAvatarBox: "h-9 w-9",
+            },
+          }}
+        />
+      </div>
+    </Panel>
+  );
+}
+
+function AiStatusFeed({ statuses }: { statuses: AiStatusMessage[] }) {
+  if (statuses.length === 0) {
+    return null;
+  }
+
+  return (
+    <Panel
+      position="top-left"
+      className="z-20 m-4 mt-20 w-80 rounded-2xl border border-surface-border bg-surface/90 p-3 shadow-2xl shadow-base/50 backdrop-blur"
+    >
+      <div className="space-y-2" aria-live="polite">
+        {statuses.map((status) => (
+          <div
+            key={status.id}
+            className="rounded-xl border border-surface-border bg-elevated px-3 py-2"
+          >
+            <p
+              className={[
+                "text-xs font-semibold",
+                status.level === "error"
+                  ? "text-state-error"
+                  : status.level === "success"
+                    ? "text-state-success"
+                    : "text-ai-text",
+              ].join(" ")}
+            >
+              Ghost AI
+            </p>
+            <p className="mt-1 text-sm leading-5 text-copy-secondary">
+              {status.text || "Ghost AI status updated."}
+            </p>
+          </div>
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
+interface CollaboratorAvatarProps {
+  participant: PresenceParticipant;
+}
+
+function CollaboratorAvatar({ participant }: CollaboratorAvatarProps) {
+  return (
+    <div
+      className={[
+        "flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-surface-border bg-elevated text-xs font-semibold text-copy-primary ring-2 ring-base",
+        participant.thinking ? "animate-pulse ring-ai" : "",
+      ].join(" ")}
+      title={participant.name}
+      aria-label={participant.name}
+    >
+      {participant.avatar ? (
+        <Image
+          src={participant.avatar}
+          alt={participant.name}
+          width={36}
+          height={36}
+          unoptimized
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        getInitials(participant.name)
+      )}
+    </div>
+  );
+}
+
+interface LiveCursorsProps {
+  collaborators: PresenceParticipant[];
+}
+
+function LiveCursors({ collaborators }: LiveCursorsProps) {
+  const cursors = collaborators.filter(
+    (collaborator) => collaborator.cursor !== null,
+  );
+
+  if (cursors.length === 0) {
+    return null;
+  }
+
+  return (
+    <ViewportPortal>
+      {cursors.map((collaborator) => {
+        const cursor = collaborator.cursor;
+
+        if (!cursor) {
+          return null;
+        }
+
+        return (
+          <div
+            key={collaborator.connectionId}
+            className="pointer-events-none absolute z-30 flex items-start gap-1"
+            style={{
+              left: cursor.x,
+              top: cursor.y,
+            }}
+          >
+            <div
+              className="h-3 w-3 rounded-[2px] shadow-lg"
+              style={{
+                backgroundColor: collaborator.color,
+                transform: "translate(-1px, -1px) rotate(45deg)",
+              }}
+            />
+            <div
+              className="flex items-center gap-1.5 rounded-xl px-2 py-1 text-xs font-medium leading-none shadow-lg"
+              style={{
+                backgroundColor: collaborator.color,
+                color: "var(--bg-base)",
+              }}
+            >
+              {collaborator.thinking ? (
+                <LoaderCircle className="h-3 w-3 animate-spin" />
+              ) : null}
+              {collaborator.name}
+            </div>
+          </div>
+        );
+      })}
+    </ViewportPortal>
+  );
+}
+
+function dedupeCollaboratorsByUser(collaborators: PresenceParticipant[]) {
+  const uniqueCollaborators = new Map<string, PresenceParticipant>();
+
+  for (const collaborator of collaborators) {
+    const existingCollaborator = uniqueCollaborators.get(collaborator.userId);
+
+    if (!existingCollaborator) {
+      uniqueCollaborators.set(collaborator.userId, collaborator);
+      continue;
+    }
+
+    uniqueCollaborators.set(collaborator.userId, {
+      ...existingCollaborator,
+      cursor: existingCollaborator.cursor ?? collaborator.cursor,
+      thinking: existingCollaborator.thinking || collaborator.thinking,
+    });
+  }
+
+  return [...uniqueCollaborators.values()];
+}
+
+function getInitials(name: string) {
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+
+  return initials || "G";
+}
 
 interface CanvasControlBarProps {
   canRedo: boolean;

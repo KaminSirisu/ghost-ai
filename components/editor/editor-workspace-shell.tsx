@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
-  Bot,
+  AlertCircle,
+  CheckCircle2,
   LayoutTemplate,
+  LoaderCircle,
   PanelLeftClose,
   PanelLeftOpen,
   Share2,
+  Sparkles,
+  type LucideIcon,
 } from "lucide-react";
-import { UserButton } from "@clerk/nextjs";
 
 import {
   CanvasRoom,
@@ -20,6 +23,7 @@ import type { CanvasTemplate } from "@/components/editor/start-templates";
 import { StartTemplatesModal } from "@/components/editor/start-templates-modal";
 import { ShareDialog } from "@/components/editor/share-dialog";
 import { Button } from "@/components/ui/button";
+import type { CanvasSaveStatus } from "@/hooks/use-canvas-autosave";
 import { useProjectActions } from "@/hooks/use-project-actions";
 import { EditorProject } from "@/lib/project-types";
 
@@ -42,6 +46,11 @@ export function EditorWorkspaceShell({
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(true);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
+  const [canvasSaveStatus, setCanvasSaveStatus] =
+    useState<CanvasSaveStatus>("idle");
+  const [saveCanvas, setSaveCanvas] = useState<(() => Promise<void>) | null>(
+    null,
+  );
   const [templateImportRequest, setTemplateImportRequest] =
     useState<CanvasTemplateImportRequest | null>(null);
   const projectActions = useProjectActions(activeProjectId);
@@ -57,6 +66,13 @@ export function EditorWorkspaceShell({
       template,
     });
   }
+
+  const handleSaveCanvasReady = useCallback(
+    (nextSaveCanvas: (() => Promise<void>) | null) => {
+      setSaveCanvas(() => nextSaveCanvas);
+    },
+    [],
+  );
 
   return (
     <main className="relative h-screen overflow-hidden bg-base text-copy-primary">
@@ -82,6 +98,10 @@ export function EditorWorkspaceShell({
         </div>
 
         <div className="flex items-center gap-2">
+          <CanvasSaveButton
+            onSave={saveCanvas}
+            status={canvasSaveStatus}
+          />
           <Button
             variant="outline"
             size="sm"
@@ -101,16 +121,21 @@ export function EditorWorkspaceShell({
             Share
           </Button>
           <Button
-            variant={isAiSidebarOpen ? "secondary" : "ghost"}
-            size="icon"
+            variant={isAiSidebarOpen ? "default" : "ghost"}
+            size="sm"
             type="button"
+            className={
+              isAiSidebarOpen
+                ? "bg-brand text-base hover:bg-brand/90"
+                : "text-copy-muted hover:text-copy-primary"
+            }
             aria-label={isAiSidebarOpen ? "Hide AI sidebar" : "Show AI sidebar"}
             aria-pressed={isAiSidebarOpen}
             onClick={() => setIsAiSidebarOpen((isOpen) => !isOpen)}
           >
-            <Bot />
+            <Sparkles />
+            AI
           </Button>
-          <UserButton />
         </div>
       </header>
 
@@ -128,25 +153,15 @@ export function EditorWorkspaceShell({
 
       <section className="absolute inset-x-0 bottom-0 top-14 bg-base">
         <CanvasRoom
+          key={activeProjectId}
+          isAiSidebarOpen={isAiSidebarOpen}
+          onAiSidebarClose={() => setIsAiSidebarOpen(false)}
+          onSaveCanvasReady={handleSaveCanvasReady}
+          onSaveStatusChange={setCanvasSaveStatus}
           roomId={activeProjectId}
           templateImportRequest={templateImportRequest}
         />
       </section>
-
-      <aside
-        className={[
-          "fixed bottom-4 right-4 top-16 z-30 hidden w-80 flex-col rounded-2xl border border-surface-border bg-surface/90 px-4 py-5 shadow-2xl shadow-base/60 backdrop-blur transition-transform duration-300 md:flex",
-          isAiSidebarOpen
-            ? "translate-x-0"
-            : "pointer-events-none translate-x-[calc(100%+1.5rem)]",
-        ].join(" ")}
-        aria-hidden={!isAiSidebarOpen}
-      >
-        <p className="text-sm font-semibold text-copy-primary">AI assistant</p>
-        <p className="mt-2 text-sm leading-6 text-copy-muted">
-          Chat controls and generation status will appear here later.
-        </p>
-      </aside>
 
       <ProjectDialogs
         createName={projectActions.createName}
@@ -179,5 +194,73 @@ export function EditorWorkspaceShell({
         onOpenChange={setIsShareOpen}
       />
     </main>
+  );
+}
+
+interface CanvasSaveButtonProps {
+  onSave: (() => Promise<void>) | null;
+  status: CanvasSaveStatus;
+}
+
+function CanvasSaveButton({ onSave, status }: CanvasSaveButtonProps) {
+  const statusConfig = {
+    error: {
+      icon: AlertCircle,
+      label: "Error",
+      title: "Canvas autosave failed",
+      className: "border-state-error/50 text-state-error",
+    },
+    idle: {
+      icon: null,
+      label: "Save",
+      title: "Save canvas",
+      className: "text-copy-muted",
+    },
+    saved: {
+      icon: CheckCircle2,
+      label: "Saved",
+      title: "Canvas saved",
+      className: "text-copy-muted",
+    },
+    saving: {
+      icon: LoaderCircle,
+      label: "Saving...",
+      title: "Saving canvas",
+      className: "text-brand",
+    },
+  } satisfies Record<
+    CanvasSaveStatus,
+    {
+      className: string;
+      icon: LucideIcon | null;
+      label: string;
+      title: string;
+    }
+  >;
+  const { className, icon: StatusIcon, label, title } = statusConfig[status];
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      type="button"
+      className={className}
+      aria-label={title}
+      aria-live="polite"
+      disabled={!onSave || status === "saving"}
+      title={title}
+      onClick={() => {
+        void onSave?.();
+      }}
+    >
+      {StatusIcon ? (
+        status === "saving" ? (
+          <StatusIcon className="animate-spin" />
+        ) : (
+          <StatusIcon />
+        )
+      ) : null}
+      {label}
+    </Button>
   );
 }

@@ -317,29 +317,40 @@ export function NodeShape({
 }
 
 function CanvasHandles() {
+  const handleClassName =
+    "!h-2 !w-2 !border !border-base !bg-copy-primary opacity-0 transition-opacity group-hover:opacity-100";
+
   return (
     <>
       <Handle
         id="top"
-        className="!h-2 !w-2 !border !border-base !bg-copy-primary opacity-0 transition-opacity group-hover:opacity-100"
+        className={handleClassName}
+        isConnectableEnd
+        isConnectableStart
         type="source"
         position={Position.Top}
       />
       <Handle
         id="right"
-        className="!h-2 !w-2 !border !border-base !bg-copy-primary opacity-0 transition-opacity group-hover:opacity-100"
+        className={handleClassName}
+        isConnectableEnd
+        isConnectableStart
         type="source"
         position={Position.Right}
       />
       <Handle
         id="bottom"
-        className="!h-2 !w-2 !border !border-base !bg-copy-primary opacity-0 transition-opacity group-hover:opacity-100"
+        className={handleClassName}
+        isConnectableEnd
+        isConnectableStart
         type="source"
         position={Position.Bottom}
       />
       <Handle
         id="left"
-        className="!h-2 !w-2 !border !border-base !bg-copy-primary opacity-0 transition-opacity group-hover:opacity-100"
+        className={handleClassName}
+        isConnectableEnd
+        isConnectableStart
         type="source"
         position={Position.Left}
       />

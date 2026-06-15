@@ -25,9 +25,25 @@ interface PrismaGlobal {
 }
 
 const globalForPrisma = globalThis as typeof globalThis & PrismaGlobal;
+const requiredPrismaDelegates = [
+  "project",
+  "projectCollaborator",
+  "projectSpec",
+  "taskRun",
+] as const;
+
+function hasRequiredPrismaDelegates(client: PrismaClient) {
+  const clientRecord = client as unknown as Record<string, unknown>;
+
+  return requiredPrismaDelegates.every((delegate) => {
+    return clientRecord[delegate] !== undefined;
+  });
+}
 
 export const prisma: PrismaClient =
-  globalForPrisma.prisma ?? createPrismaClient();
+  globalForPrisma.prisma && hasRequiredPrismaDelegates(globalForPrisma.prisma)
+    ? globalForPrisma.prisma
+    : createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
