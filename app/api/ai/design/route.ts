@@ -1,4 +1,4 @@
-import { auth as triggerAuth, tasks } from "@trigger.dev/sdk";
+import { tasks } from "@trigger.dev/sdk";
 
 import { prisma } from "@/lib/prisma";
 import {
@@ -99,15 +99,8 @@ export async function POST(request: Request) {
     },
   });
 
-  const publicToken = await triggerAuth.createPublicToken({
-    scopes: {
-      read: {
-        runs: [handle.id],
-        tasks: ["design-agent"],
-      },
-    },
-    expirationTime: "1h",
-  });
-
-  return Response.json({ runId: handle.id, publicToken }, { status: 201 });
+  return Response.json(
+    { runId: handle.id, publicToken: handle.publicAccessToken },
+    { status: 201 },
+  );
 }

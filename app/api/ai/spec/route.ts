@@ -103,5 +103,8 @@ export async function POST(request: Request) {
     },
   });
 
-  return Response.json({ runId: handle.id }, { status: 201 });
+  return Response.json(
+    { runId: handle.id, publicToken: handle.publicAccessToken },
+    { status: 201 },
+  );
 }
