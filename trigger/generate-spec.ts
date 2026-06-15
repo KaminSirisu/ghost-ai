@@ -5,8 +5,6 @@ import { generateText } from "ai";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 
-import { prisma } from "@/lib/prisma";
-
 const chatMessageSchema = z
   .object({
     content: z.string().min(1).max(4000),
@@ -118,6 +116,7 @@ async function persistMarkdownSpec({
     contentType: "text/markdown; charset=utf-8",
     cacheControlMaxAge: 60,
   });
+  const { prisma } = await import("@/lib/prisma");
 
   return prisma.projectSpec.create({
     data: {
